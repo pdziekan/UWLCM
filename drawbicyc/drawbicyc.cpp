@@ -54,6 +54,7 @@ int main(int argc, char** argv)
   H5::DataSpace h5s = h5d.getSpace();
   int NDims = h5s.getSimpleExtentNdims();
 
+/*
   if(NDims == 2)
   {
 
@@ -69,12 +70,15 @@ int main(int argc, char** argv)
     if(flag_fields)   plot_fields(PlotterMicro_t<3>(h5, micro), Plots(type));
     if(flag_qv_qc_2_6_10_min)   plot_qv_qc_2_6_10_min(PlotterMicro_t<2>(h5, micro), Plots(type));
     if(flag_lgrngn_spec) {
+*/
       plot_lgrngn_spec_positions(PlotterMicro_t<3>(h5, "lgrngn"), Plots(type));
       plot_lgrngn_spec(PlotterMicro_t<3>(h5, "lgrngn"), Plots(type));
+/*
     }
   }
   else
     assert(false && "need 2d or 3d input data");
+*/
 
 return 0;
 } // main

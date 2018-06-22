@@ -28,9 +28,9 @@ void plot_lgrngn_spec_positions(Plotter_t plotter, Plots plots)
   // cloud water content
   auto tmp = plotter.h5load_ract_timestep(spectra_step * n["outfreq"]) * 1e3;
 
-  std::string title = "cloud water mixing ratio [g/kg]";
-  gp << "set title '" + title + " t = " << std::fixed << std::setprecision(2) << (double(spectra_step) * n["outfreq"] * n["dt"] / 60.) << "min'\n";
-  init(gp, plotter.file + "_spectra_positions_at" + zeropad(spectra_step) + ".svg", 1, 1, n, 2.); 
+  std::string title = "q_c [g/kg]";
+  gp << "set title '" + title + " t = " << std::fixed << std::setprecision(0) << (double(spectra_step) * n["outfreq"] * n["dt"] / 60.) << " min'\n";
+  init(gp, plotter.file + "_spectra_positions_at" + zeropad(spectra_step) + ".svg", 1, 1, n, 2., 2.4); 
 
   {   
     for (auto &fcs : focus_3d)
@@ -58,7 +58,7 @@ void plot_lgrngn_spec_positions(Plotter_t plotter, Plots plots)
     {   
       auto &x = fcs[0];
       auto &y = fcs[2];
-      gp << "set label " << int(lbl) << " '" << lbl << "' at " << x-1 << "," << y-7 << " front font \",20\"\n";
+      gp << "set label " << int(lbl) << " '" << lbl << "' at " << x-1 << "," << y-7 << " front font \",25\" tc def\n";
       lbl += 1;
     }
   }   
@@ -116,14 +116,14 @@ void plot_lgrngn_spec(Plotter_t plotter, Plots plots)
     const int &x = fcs[0], &y = fcs[1], &z = fcs[2];
     const blitz::RectDomain<3> focusBox({x-box_size, y-box_size, z-box_size}, {x+box_size, y+box_size, z+box_size});
 
-    gp << "set label 1 '(" << lbl << ")' at graph .1, .93 font \",15\"\n";
+    gp << "set label 1 '(" << lbl << ")' at graph .1, .9 font \",25\"\n";
     lbl += 1;
 
     // calc ratio of water content to adiabatic water content
     {
       auto tmp = plotter.h5load_ract_timestep(spectra_step * n["outfreq"]) * 1e3;
       double ratio = mean(tmp(focusBox)) / r_c_adiab;
-      gp << "set label 4 'AF = " << std::fixed << std::setprecision(2) << ratio << "' at graph .2, .63 font \",15\"\n";
+      gp << "set label 4 'AF = " << std::fixed << std::setprecision(2) << ratio << "' at graph .2, .45 font \",25\"\n";
     }
 
     // calc mean and std dev of radius of acivated droplets in the box
@@ -186,8 +186,8 @@ void plot_lgrngn_spec(Plotter_t plotter, Plots plots)
     catch(...) {;}
 
 
-    gp << "set label 2 '<r> = " << std::fixed << std::setprecision(2) << act_rw_mean * 1e6 <<" µm' at graph .2, .83 font \",15\"\n";
-    gp << "set label 3 'σ = " << std::fixed << std::setprecision(2) << act_rw_std_dev * 1e6 <<" µm' at graph .2, .73 font \",15\"\n";
+    gp << "set label 2 '<r> = " << std::fixed << std::setprecision(2) << act_rw_mean * 1e6 <<" µm' at graph .2, .75 font \",25\"\n";
+    gp << "set label 3 'σ = " << std::fixed << std::setprecision(2) << act_rw_std_dev * 1e6 <<" µm' at graph .2, .6 font \",25\"\n";
 
 
     std::map<float, float> focus_w;

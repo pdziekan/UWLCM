@@ -77,17 +77,18 @@ class Plotter_t<3> : public PlotterCommon
   }
 
   template <class gp_t, class data_t>
-  void plot(gp_t &gp, const data_t &data, const blitz::Range &yrange_override)
+  void plot(gp_t &gp, const data_t &data, const blitz::Range &yrange_override, const blitz::Range &xrange_override = blitz::Range::all())
   {
   //  throw std::runtime_error("3d fields plotting doesn't work yet");
     blitz::Array<float, 3> tmp3d(data);
     using namespace blitz::tensor;
     // select a slize in second dimension to average over
-    auto tmp3dslice = tmp3d(blitz::Range::all(), yrange_override, blitz::Range::all());
+    auto tmp3dslice = tmp3d(xrange_override, yrange_override, blitz::Range::all());
     auto tmp2d = blitz::mean(tmp3dslice(i,k,j), k); // mean over second dimension
     blitz::Array<float, 2> tmp(tmp2d);
 
     gp << "set xrange [0:" << tmp.extent(0)-1 << "]\n";
+    gp << "set xrange [45:106]\n";
     gp << "set yrange [0:" << tmp.extent(1)-1 << "]\n";
     gp << "splot '-' binary" << gp.binfmt(tmp.transpose(blitz::secondDim, blitz::firstDim)) << " scan=yx origin=(0,0,0) with image failsafe notitle\n";
     gp.sendBinary(tmp);

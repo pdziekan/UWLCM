@@ -108,6 +108,7 @@ class slvr_common : public slvr_dim<ct_params_t>
 
   void hook_ante_step()
   {
+    std::cout << "time step " << this->timestep << std::endl;
     if (spinup != 0 && spinup == this->timestep)
     {
       // turn autoconversion on only after spinup (if spinup was specified)
