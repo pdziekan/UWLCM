@@ -35,8 +35,13 @@ void slvr_common<ct_params_t>::radiation(typename parent_t::arr_t &rv)
     namespace idxperm = libmpdataxx::idxperm;
     using ix = typename ct_params_t::ix;
     constexpr int perm_no=ix::w; // 1 for 2D, 2 for 3D
-  
     int nz = this->mem->grid_size[perm_no].length(); 
+
+    auto ground = idxperm::pi<perm_no>(0, this->hrzntl_subdomain);
+    auto top = idxperm::pi<perm_no>(nz-1, this->hrzntl_subdomain);
+    auto noground = idxperm::pi<perm_no>(rng_t(1, nz-1), this->hrzntl_subdomain);
+    auto notop = idxperm::pi<perm_no>(rng_t(0, nz-2), this->hrzntl_subdomain);
+  
   
     // index of first cell above inversion
     tmp1(ijk)  = rv(ijk) + r_l(ijk);
@@ -49,36 +54,43 @@ void slvr_common<ct_params_t>::radiation(typename parent_t::arr_t &rv)
   
     tmp1(ijk).reindex(this->zero) *= -params.dz * params.ForceParameters.heating_kappa * (*params.rhod)(this->vert_idx);
   
+    // WARNING: using beta as temp storage
+    beta(top) = 0.;
     for(int z = nz-2 ; z >= 0; --z)
-      tmp1(idxperm::pi<perm_no>(z, this->hrzntl_subdomain)) += tmp1(idxperm::pi<perm_no>(z+1, this->hrzntl_subdomain));
+      beta(idxperm::pi<perm_no>(z, this->hrzntl_subdomain)) = beta(idxperm::pi<perm_no>(z+1, this->hrzntl_subdomain)) + 
+        0.5 * (tmp1(idxperm::pi<perm_no>(z+1, this->hrzntl_subdomain)) + tmp1(idxperm::pi<perm_no>(z, this->hrzntl_subdomain)));
   
-    auto ground = idxperm::pi<perm_no>(0, this->hrzntl_subdomain);
-    auto noground = idxperm::pi<perm_no>(rng_t(1, nz-1), this->hrzntl_subdomain);
-    auto notop = idxperm::pi<perm_no>(rng_t(0, nz-2), this->hrzntl_subdomain);
-  
-    F(ijk) = params.ForceParameters.F_0 * exp(tmp1(ijk)); 
+    F(ijk) = params.ForceParameters.F_0 * exp(beta(ijk)); 
   
     // calc sum of r_l below certain level and store it in tmp1
-    tmp1(ijk) = r_l(ijk);
+//    tmp1(ijk) = r_l(ijk);
   
-    tmp1(ijk).reindex(this->zero) *= - params.dz * params.ForceParameters.heating_kappa * (*params.rhod)(this->vert_idx);
+//    tmp1(ijk).reindex(this->zero) *= - params.dz * params.ForceParameters.heating_kappa * (*params.rhod)(this->vert_idx);
   
     // copy one cell upwards
-    for(int z = nz-1 ; z >= 1; --z)
-      tmp1(idxperm::pi<perm_no>(z, this->hrzntl_subdomain)) = tmp1(idxperm::pi<perm_no>(z-1, this->hrzntl_subdomain));
-    tmp1(ground) = 0.;
-  
-    for(int z = 1 ; z <= nz-1; ++z)
-      tmp1(idxperm::pi<perm_no>(z, this->hrzntl_subdomain)) += tmp1(idxperm::pi<perm_no>(z-1, this->hrzntl_subdomain));
+//    for(int z = nz-1 ; z >= 1; --z)
+//      tmp1(idxperm::pi<perm_no>(z, this->hrzntl_subdomain)) = tmp1(idxperm::pi<perm_no>(z-1, this->hrzntl_subdomain));
+//    tmp1(ground) = 0.;
+//  
+//    for(int z = 1 ; z <= nz-1; ++z)
+//      tmp1(idxperm::pi<perm_no>(z, this->hrzntl_subdomain)) += tmp1(idxperm::pi<perm_no>(z-1, this->hrzntl_subdomain));
 
-    F(ijk) += params.ForceParameters.F_1 * exp(tmp1(ijk));
+
+    beta(ground) = 0.;
+    for(int z = 1 ; z <= nz-1; ++z)
+      beta(idxperm::pi<perm_no>(z, this->hrzntl_subdomain)) = beta(idxperm::pi<perm_no>(z-1, this->hrzntl_subdomain)) + 
+        0.5 * (tmp1(idxperm::pi<perm_no>(z-1, this->hrzntl_subdomain)) + tmp1(idxperm::pi<perm_no>(z, this->hrzntl_subdomain)));
+
+    F(ijk) += params.ForceParameters.F_1 * exp(beta(ijk));
+    beta(ijk) = 0;
   
     // free atmosphere part
-    F(ijk).reindex(this->zero) += where(this->vert_idx > k_i(this->hrzntl_subdomain)(blitz::tensor::i, blitz::tensor::j),  // works even in 2D ?!?!
+    F(ijk).reindex(this->zero) += where(this->vert_idx >= k_i(this->hrzntl_subdomain)(blitz::tensor::i, blitz::tensor::j),  // works even in 2D ?!?!
         (libcloudphxx::common::moist_air::c_pd<setup::real_t>() / si::joules * si::kilograms * si::kelvins) * params.ForceParameters.rho_i * params.ForceParameters.D *
-        (0.25 * pow((this->vert_idx - 0.5) * params.dz - (k_i(this->hrzntl_subdomain)(blitz::tensor::i, blitz::tensor::j) - .5) * params.dz, 4./3) +
-        (k_i(this->hrzntl_subdomain)(blitz::tensor::i, blitz::tensor::j) - .5) * params.dz * pow((this->vert_idx - 0.5) * params.dz - (k_i(this->hrzntl_subdomain)(blitz::tensor::i, blitz::tensor::j) - .5) * params.dz, 1./3))
+        (0.25 * pow((this->vert_idx - k_i(this->hrzntl_subdomain)(blitz::tensor::i, blitz::tensor::j) + .5) * params.dz, 4./3) +
+        (k_i(this->hrzntl_subdomain)(blitz::tensor::i, blitz::tensor::j) - .5) * params.dz * pow((this->vert_idx - k_i(this->hrzntl_subdomain)(blitz::tensor::i, blitz::tensor::j) + .5) * params.dz, 1./3))
         , 0);
+    
   }
   else
     F(ijk)=0.;
