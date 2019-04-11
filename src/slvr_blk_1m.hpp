@@ -213,11 +213,13 @@ class slvr_blk_1m_common : public std::conditional_t<ct_params_t::sgs_scheme == 
       {
         // ---- cloud water sources ----
         rc_src();
-        rhs.at(ix::rc)(this->ijk) += this->alpha(this->ijk) + this->beta(this->ijk) * this->state(ix::rc)(this->ijk);
+        rhs.at(ix::rc)(this->ijk) += this->alpha(this->ijk);// + this->beta(this->ijk) * this->state(ix::rc)(this->ijk);
+        nancheck(rhs.at(ix::rc)(this->ijk), "RHS of rc after rc_src");
 
         // ---- rain water sources ----
         rr_src();
-        rhs.at(ix::rr)(this->ijk) += this->alpha(this->ijk) + this->beta(this->ijk) * this->state(ix::rr)(this->ijk);
+        rhs.at(ix::rr)(this->ijk) += this->alpha(this->ijk);// + this->beta(this->ijk) * this->state(ix::rr)(this->ijk);
+        nancheck(rhs.at(ix::rr)(this->ijk), "RHS of rr after rr_src");
 
     
         // when using explicit turbulence model add subgrid forces to rc and rr
@@ -225,6 +227,8 @@ class slvr_blk_1m_common : public std::conditional_t<ct_params_t::sgs_scheme == 
         if (ct_params_t::sgs_scheme != libmpdataxx::solvers::iles)
         {
           this->sgs_scalar_forces({ix::rc, ix::rr});
+          nancheck(rhs.at(ix::rc)(this->ijk), "RHS of rc after sgs_scalar_forces");
+          nancheck(rhs.at(ix::rr)(this->ijk), "RHS of rr after sgs_scalar_forces");
         }
         
         break;
