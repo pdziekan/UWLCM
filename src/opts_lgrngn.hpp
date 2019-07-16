@@ -98,16 +98,43 @@ void setopts_micro(
  // if(!unit_test)
   {
     rt_params.cloudph_opts_init.dry_distros.emplace(
-      case_ptr->kappa, // key
+      0.6, // kappa
       std::make_shared<setup::log_dry_radii<thrust_real_t>> (
-        case_ptr->mean_rd1, // parameters
-        case_ptr->mean_rd2,
-        case_ptr->sdev_rd1,
-        case_ptr->sdev_rd2,
-        case_ptr->n1_stp,
-        case_ptr->n2_stp
+        thrust_real_t(0.01e-6) * si::meters,
+        thrust_real_t(0.01e-6) * si::meters,
+        thrust_real_t(1),
+        thrust_real_t(1),
+        thrust_real_t(100e6) / si::cubic_meters,
+        thrust_real_t(0)     / si::cubic_meters
       )
     );
+
+    rt_params.cloudph_opts_init.dry_distros.emplace(
+      1.2, // kappa
+      std::make_shared<setup::log_dry_radii<thrust_real_t>> (
+        thrust_real_t(0.1e-6) * si::meters,
+        thrust_real_t(0.1e-6) * si::meters,
+        thrust_real_t(1.5),
+        thrust_real_t(1.5),
+        thrust_real_t(10e6) / si::cubic_meters,
+        thrust_real_t(0)     / si::cubic_meters
+      )
+    );
+
+/*
+    rt_params.cloudph_opts_init.dry_distros.emplace(
+      1.2, // kappa
+      std::make_shared<setup::log_dry_radii<thrust_real_t>> (
+        0.1e-6 * si::meters,
+        0.1e-6 * si::meters,
+        1.5,
+        1.5,
+        10e6 / si::cubic_meters,
+        0     / si::cubic_meters
+      )
+    );
+    */
+
    }
 /*  else if(unit_test)
     boost::assign::ptr_map_insert<
