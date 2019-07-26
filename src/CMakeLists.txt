@@ -1,3 +1,12 @@
+cmake_policy(SET CMP0057 NEW) # for the in_list operator
+
+# search for libmpdata
+message(STATUS "Looking for libmpdata++")
+find_package(libmpdata++)
+if (NOT libmpdataxx_FOUND)
+  message(FATAL_ERROR "libmpdata++ not found")
+endif()
+
 # Select flags.
 #-g0 negates -g; -UBZ_DEBUG negates blitz debug; NOTE: don't use -Ofast as it makes std::isfinite(sum(x)) return true even if some elements of x are nan/inf
 SET(CMAKE_CXX_FLAGS_RELWITHDEBINFO "${libmpdataxx_CXX_FLAGS_DEBUG} -O3 -g0 -UBZ_DEBUG -march=native") 
@@ -35,6 +44,13 @@ add_dependencies(bicycles git_revision.h)
 target_link_libraries(bicycles PRIVATE ${libmpdataxx_LIBRARIES})
 target_include_directories(bicycles PRIVATE ${libmpdataxx_INCLUDE_DIRS})
 
+#search for libcloudphxx
+message(STATUS "Looking for libcloudph++")
+find_package(libcloudph++)
+if (NOT libcloudph++_FOUND)
+  message(FATAL_ERROR "libclouphxx++ not found")
+endif()
+
 target_link_libraries(bicycles
   PRIVATE
     clphxx::cloudphxx_lgrngn
@@ -44,7 +60,8 @@ target_link_libraries(bicycles
 set_target_properties(bicycles PROPERTIES CXX_EXTENSIONS OFF)
 target_compile_features(bicycles PRIVATE cxx_std_14)
 
+# search for Boost
 find_package(Boost COMPONENTS thread iostreams system timer program_options filesystem REQUIRED)
-target_link_libraries(bicycles PRIVATE ${Boost_LIBRARIES})
+target_link_libraries(bicycles PRIVATE Boost::thread Boost::iostreams Boost::system Boost::timer Boost::program_options Boost::filesystem)
 
 install(TARGETS bicycles DESTINATION bin)
