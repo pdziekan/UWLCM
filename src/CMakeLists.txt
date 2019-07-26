@@ -1,5 +1,3 @@
-cmake_policy(SET CMP0057 NEW) # for the in_list operator
-
 # search for libmpdata
 message(STATUS "Looking for libmpdata++")
 find_package(libmpdata++)
