@@ -21,6 +21,7 @@ namespace setup
     const real_t z_abs = 1250;
     const real_t z_i[] = {/*RF1*/840, /*RF2*/795}; //initial inversion height
     const quantity<si::length, real_t> z_rlx_vctr = 25 * si::metres;
+    const real_t div_LS = 3.75e-6; // [1/s] large-scale wind divergence used to calc subsidence of SDs, TODO: use boost.units to enforce 1/s
 
     template<class case_ct_params_t, int RF, int n_dims>
     class DycomsCommon : public CasesCommon<case_ct_params_t, n_dims>
@@ -83,7 +84,7 @@ namespace setup
       {
         real_t operator()(const real_t &z) const
         {
-          return - D * z; 
+          return - div_LS * z; 
         }
         BZ_DECLARE_FUNCTOR(w_LS_fctr);
       };
@@ -173,6 +174,8 @@ namespace setup
         using libcloudphxx::common::moist_air::R_d;
         using libcloudphxx::common::const_cp::l_tri;
         using libcloudphxx::common::theta_std::p_1000;
+
+        profs.vert_stretch = 1; // stretching needs to be changed before parent env_prof is called, as it affects cell_Z, w_LS and mix_len !
 
         parent_t::env_prof(profs, nz, user_params);
   
@@ -264,14 +267,14 @@ namespace setup
   //        th_e(k) = theta_dry::std2dry<real_t>(th_e(k) * si::kelvins, quantity<si::dimensionless, real_t>(rv_e(k))) / si::kelvins;
 
         // subsidence rate
-        profs.w_LS = w_LS_fctr()(k * dz);
+        profs.w_LS = w_LS_fctr()(profs.cell_ctr_alt);
   
         // calc surf flux divergence directly
         real_t z_0 = z_rlx_vctr / si::metres;
-        profs.hgt_fctr_vctr = exp(- k * dz / z_0) / z_0;
+        profs.hgt_fctr_vctr = exp(- profs.cell_ctr_alt / z_0) / z_0;
         // for scalars
         z_0 = user_params.z_rlx_sclr;
-        profs.hgt_fctr_sclr = exp(- k * dz / z_0) / z_0;
+        profs.hgt_fctr_sclr = exp(- profs.cell_ctr_alt / z_0) / z_0;
       }
 
       void update_surf_flux_sens(blitz::Array<real_t, n_dims> surf_flux_sens,
@@ -320,8 +323,8 @@ namespace setup
         this->sdev_rd2 = real_t(1.7);
         this->n1_stp = real_t(125e6) / si::cubic_metres, // 125 || 31
         this->n2_stp = real_t(65e6) / si::cubic_metres;  // 65 || 16
-        this->div_LS = real_t(3.75e-6); // [1/s] large-scale wind divergence used to calc subsidence of SDs, TODO: use boost.units to enforce 1/s
         this->ForceParameters.coriolis_parameter = 0.76e-4; // [1/s] @ 31.5 deg N
+        this->ForceParameters.D = div_LS;
         this->Z = Z;
       }
     };

@@ -593,6 +593,10 @@ class slvr_lgrngn : public std::conditional_t<ct_params_t::sgs_scheme == libmpda
       nancheck(Cz, "Cz after copying from mpdata");
 
       // ... and now dividing them by this->rhod (TODO: z=0 is located at k=1/2)
+      // TODO: this procedure causes errors, becaus mpdata interpolates GC = rhod * jacobian * courant
+      //       so dividing by (interpolated) rhod wont give us jacobian * courant!
+      //       Fix: take velocities from mpdata (vips) and interpolate + calc corurants ourselves,
+      //            possibly reusing GC arrays?
       {
         Cx.reindex(this->zero) /= (*params.rhod)(this->vert_idx);
         Cy.reindex(this->zero) /= (*params.rhod)(this->vert_idx);

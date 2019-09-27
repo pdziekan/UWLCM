@@ -20,8 +20,6 @@ namespace setup
   namespace theta_std = libcloudphxx::common::theta_std;
   namespace theta_dry = libcloudphxx::common::theta_dry;
 
-  const real_t D =  3.75e-6; // large-scale wind horizontal divergence [1/s]
-
   // container for constants that appear in forcings, some are not needed in all cases, etc...
   // TODO: make forcing functions part of case class
   struct ForceParameters_t
@@ -35,21 +33,27 @@ namespace setup
   // TODO: try a different design where it is not necessary ?
   struct profiles_t
   {
-    arr_1D_t th_e, p_e, rv_e, rl_e, th_ref, rhod, w_LS, hgt_fctr_sclr, hgt_fctr_vctr, mix_len;
+    arr_1D_t th_e, p_e, rv_e, rl_e, th_ref, rhod, w_LS, hgt_fctr_sclr, hgt_fctr_vctr, mix_len, vert_stretch, cell_ctr_alt;
     std::array<arr_1D_t, 2> geostr;
 
     profiles_t(int nz) :
     // rhod needs to be bigger, cause it divides vertical courant number
     // TODO: should have a halo both up and down, not only up like now; then it should be interpolated in courant calculation
-      th_e(nz), p_e(nz), rv_e(nz), rl_e(nz), th_ref(nz), rhod(nz+1), w_LS(nz), hgt_fctr_vctr(nz), hgt_fctr_sclr(nz), mix_len(nz)
+      th_e(nz), p_e(nz), rv_e(nz), rl_e(nz), th_ref(nz), rhod(nz+1), w_LS(nz), hgt_fctr_vctr(nz), hgt_fctr_sclr(nz), mix_len(nz), vert_stretch(nz), cell_ctr_alt(nz)
     {
       geostr[0].resize(nz);
       geostr[1].resize(nz);
+
+      // default values
+      geostr[0] = 0;
+      geostr[1] = 0;
+      w_LS = 0; // by default, no large-scale subsidence
+      vert_stretch = 1; // by default, no grid stretching
     }
   };
   struct profile_ptrs_t
   {
-    arr_1D_t *th_e, *p_e, *rv_e, *rl_e, *th_ref, *rhod, *w_LS, *hgt_fctr_sclr, *hgt_fctr_vctr, *mix_len, *geostr[2];
+    arr_1D_t *th_e, *p_e, *rv_e, *rl_e, *th_ref, *rhod, *w_LS, *hgt_fctr_sclr, *hgt_fctr_vctr, *mix_len, *vert_stretch, *geostr[2], *cell_ctr_alt;
   };
 
   // copy external profiles into rt_parameters
@@ -68,6 +72,8 @@ namespace setup
       {p.rhod         , profs.rhod         },
       {p.w_LS         , profs.w_LS         },
       {p.mix_len      , profs.mix_len      },
+      {p.vert_stretch , profs.vert_stretch },
+      {p.cell_ctr_alt , profs.cell_ctr_alt },
       {p.geostr[0]    , profs.geostr[0]    },
       {p.geostr[1]    , profs.geostr[1]    }
     };
@@ -91,7 +97,7 @@ namespace setup
       n_dims
     >;
 
-    //th, rv and surface fluxes relaxation time and height
+    //th, rv and surface fluxes relaxation time and alt
     const quantity<si::time, real_t> tau_rlx = 300 * si::seconds;
 
     // domain size
@@ -110,8 +116,6 @@ namespace setup
 
     // hygroscopicity kappa of the aerosol 
     quantity<si::dimensionless, real_t> kappa = .61; // defaults to ammonium sulphate; CCN-derived value from Table 1 in Petters and Kreidenweis 2007
-
-    real_t div_LS = 0.; // large-scale wind divergence (same as ForceParameters::D), 0. to turn off large-scale subsidence of SDs, TODO: add a process switch in libcloudph++ like for coal/cond/etc
 
     ForceParameters_t ForceParameters;
 
@@ -135,22 +139,20 @@ namespace setup
     virtual void intcond(concurr_any_t &solver, arr_1D_t &rhod, arr_1D_t &th_e, arr_1D_t &rv_e, arr_1D_t &rl_e, arr_1D_t &p_e, int rng_seed) =0;
     virtual void env_prof(profiles_t &profs, int nz, const user_params_t &user_params)
     {
-      profs.geostr[0] = 0;
-      profs.geostr[1] = 0;
 
-      blitz::firstIndex k;
       real_t dz = (Z / si::metres) / (nz-1);
 
-      real_t sgs_delta;
-      if (user_params.sgs_delta > 0)
-      {
-        sgs_delta = user_params.sgs_delta;
-      }
-      else
-      {
-        sgs_delta = dz;
-      }
-      profs.mix_len = min(max(k, 1) * dz * 0.845, sgs_delta);
+      arr_1D_t dz_stretched(nz);
+      dz_stretched = dz * profs.vert_stretch;
+      std::cerr << "dz stretched: " << dz_stretched << std::endl;
+      std::cerr << "cell ctr alt: " << profs.cell_ctr_alt << std::endl;
+      profs.cell_ctr_alt(0) = 0.; // ground level (z0) is at the center of the lowermost cell 
+      for(int i = 1; i<nz; ++i) // very bad loop
+        profs.cell_ctr_alt(i) = profs.cell_ctr_alt(i-1) + dz_stretched(i-1) / 2. + dz_stretched(i) / 2.; 
+
+      auto sgs_delta = dz_stretched; // might be changed to (dx*dy*dz)^(1/3) or (dx+dy+dz)/3
+      blitz::firstIndex k;
+      profs.mix_len = min(max(k, 1) * dz_stretched(k) * 0.845, sgs_delta);
     }
 
     virtual void update_surf_flux_sens(blitz::Array<real_t, n_dims> surf_flux_sens, 
@@ -169,7 +171,7 @@ namespace setup
       ForceParameters.F_0 = 70; // w/m^2
       ForceParameters.F_1 = 22; // w/m^2
       ForceParameters.q_i = 8e-3; // kg/kg
-      ForceParameters.D = D; // large-scale wind horizontal divergence [1/s]
+      ForceParameters.D = 0; // large-scale wind horizontal divergence [1/s]
       ForceParameters.rho_i = 1.12; // kg/m^3
       ForceParameters.u_fric = 0.25; // m/s; friction velocity
       ForceParameters.surf_latent_flux_in_watts_per_square_meter = true; // otherwise it's considered to be in [m/s]
