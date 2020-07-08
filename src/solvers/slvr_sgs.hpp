@@ -304,8 +304,9 @@ class slvr_sgs : public slvr_common<ct_params_t>
 //    //std::cout << "test tht6: " << this->k_m(0, 0) << std::endl;
 //    //std::cout << "test tht7: " << this->k_m(0, 1) << std::endl;
 //    std::cout << "recording sgs" << std::endl;
-//    this->record_aux_dsc("k_m", this->k_m);
+    this->record_aux_dsc("k_m", this->k_m);
     this->record_aux_dsc("tke", tke);
+    this->record_aux_dsc("diss_rate", this->diss_rate);
 //    this->record_aux_dsc("sgs_u_flux", sgs_momenta_fluxes[0]);
 //    if (ct_params_t::n_dims > 2)
 //    {
