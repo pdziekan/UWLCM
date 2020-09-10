@@ -90,10 +90,10 @@ namespace setup
       if (exp(lnrd) < 0.8e-6)
         return T((
             lognormal::n_e(mean_rd3, sdev_rd3, n3_stp, quantity<si::dimensionless, real_t>(lnrd)) 
-          ) * si::cubic_metres;
+          ) * si::cubic_metres
+        );
       else
-        return T(0); // cutoff at 0.8 um to get only non-GCCN sea-salts from this distro
-      );
+        return T(0 * si::cubic_metres); // cutoff at 0.8 um to get only non-GCCN sea-salts from this distro
     }
   };
 };
