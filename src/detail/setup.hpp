@@ -93,7 +93,7 @@ namespace setup
           ) * si::cubic_metres
         );
       else
-        return T(0 * si::cubic_metres); // cutoff at 0.8 um to get only non-GCCN sea-salts from this distro
+        return T(0); // cutoff at 0.8 um to get only non-GCCN sea-salts from this distro
     }
   };
 };
