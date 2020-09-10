@@ -19,7 +19,8 @@ namespace setup
   const quantity<si::dimensionless, real_t>
     sdev_rd3 = real_t(2.235);
   const quantity<power_typeof_helper<si::length, static_rational<-3>>::type, real_t>
-    n3_stp = real_t(2.216e6) / si::cubic_metres;
+    //n3_stp = real_t(2.216e6) / si::cubic_metres;
+    n3_stp = real_t(10*2.216e6) / si::cubic_metres; // increase concentration 10 times, just like 10x GCCN in the paper
   
   //aerosol chemical composition parameters (needed for activation)
   // for lgrngn:
@@ -80,15 +81,18 @@ namespace setup
     { return new log_dry_radii_unit_test( *this ); }
   };
 */
-  // lognormal aerosol distribution with GCCN
+  // lognormal aerosol distribution fitted to GCCN vocals observations
   template <typename T>
-  struct log_dry_radii_gccn : public libcloudphxx::common::unary_function<T>
+  struct log_dry_radii_sea_salt_ccn : public libcloudphxx::common::unary_function<T>
   {
     T funval(const T lnrd) const
     {
-      return T((
-          lognormal::n_e(mean_rd3, sdev_rd3, n3_stp, quantity<si::dimensionless, real_t>(lnrd)) 
-        ) * si::cubic_metres
+      if (exp(lnrd) < 0.8e-6)
+        return T((
+            lognormal::n_e(mean_rd3, sdev_rd3, n3_stp, quantity<si::dimensionless, real_t>(lnrd)) 
+          ) * si::cubic_metres;
+      else
+        return T(0); // cutoff at 0.8 um to get only non-GCCN sea-salts from this distro
       );
     }
   };

@@ -201,16 +201,17 @@ void setopts_micro(
     )(
       setup::kappa // key
     );*/
+
+    // add sea-salts from the distribution fitted to VOCALS GCCN observations, currently cutoff at 0.8um to get non-GCCN sea salts
 /*
-  if(gccn) // add the gccns spectra
-    boost::assign::ptr_map_insert<
-      setup::log_dry_radii_gccn<thrust_real_t> // value type
-    >(
-      rt_params.cloudph_opts_init.dry_distros // map
-    )(
-      setup::kappa_gccn // key
-    );
+  if(gccn)
 */
+
+    rt_params.cloudph_opts_init.dry_distros.emplace(
+      1.28, // key (kappa)
+      std::make_shared<setup::log_dry_radii_sea_salt_ccn<thrust_real_t>> (
+      )
+    );
 
   // process toggling
   rt_params.cloudph_opts.adve = vm["adve"].as<bool>();
