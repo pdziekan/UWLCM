@@ -42,14 +42,14 @@ class slvr_common : public slvr_dim<ct_params_t>
   std::array<blitz::Array<real_t, parent_t::n_dims>, n_flxs> surf_fluxes;
   */
 
-  parent_t::arr_t surf_flux_sens,
-                  surf_flux_lat,
-                  surf_flux_u,
-                  surf_flux_v,
-                  surf_flux_tmp,
-                  surf_flux_zero, // zero-filled array, find a way to avoid this
-                  k_i, // index of inversion TODO: in MPI calc average k_i over all processes
-                  U_ground; 
+  parent_t::arr_t &surf_flux_sens,
+                  &surf_flux_lat,
+                  &surf_flux_u,
+                  &surf_flux_v,
+                  &surf_flux_tmp,
+                  &surf_flux_zero, // zero-filled array, find a way to avoid this
+                  &k_i, // index of inversion TODO: in MPI calc average k_i over all processes
+                  &U_ground; 
 
   // global arrays, shared among threads, TODO: in fact no need to share them?
   typename parent_t::arr_t &tmp1,

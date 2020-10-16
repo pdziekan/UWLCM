@@ -42,7 +42,7 @@ class slvr_lgrngn : public std::conditional_t<ct_params_t::sgs_scheme == libmpda
       prtcls->diag_all();
       prtcls->diag_wet_mom(3);
       auto r_l_indomain = this->r_l(this->domain); // rl refrences subdomain of r_l
-      r_l_indomain = typename parent_t::arr_t(prtcls->outbuf(), r_l_indomain.shape(), blitz::duplicateData, r_l_indomain.order()); // copy in data from outbuf; total liquid third moment of wet radius per kg of dry air [m^3 / kg]
+      r_l_indomain = typename parent_t::arr_t(prtcls->outbuf(), r_l_indomain.shape(), blitz::duplicateData, r_l_indomain.ordering()); // copy in data from outbuf; total liquid third moment of wet radius per kg of dry air [m^3 / kg]
     }
     this->mem->barrier();
 
@@ -296,7 +296,7 @@ class slvr_lgrngn : public std::conditional_t<ct_params_t::sgs_scheme == libmpda
       prtcls->diag_wet_rng(.5e-6, 25.e-6);
       prtcls->diag_wet_mom(3);
       auto rc = tmp(this->domain);
-      rc = typename parent_t::arr_t(prtcls->outbuf(), rc.shape(), blitz::duplicateData, rc.order());
+      rc = typename parent_t::arr_t(prtcls->outbuf(), rc.shape(), blitz::duplicateData, rc.ordering());
     }
     this->mem->barrier();
 
