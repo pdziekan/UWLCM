@@ -22,7 +22,6 @@ class slvr_lgrngn : public std::conditional_t<ct_params_t::sgs_scheme == libmpda
   public:
   using ix = typename ct_params_t::ix;
   using real_t = typename ct_params_t::real_t;
-  using arr_sub_t = typename parent_t::arr_sub_t;
   private:
 
   // member fields

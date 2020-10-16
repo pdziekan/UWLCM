@@ -35,7 +35,6 @@ class slvr_dim<
   public:
   using parent_t = slvr_piggy<ct_params_t>;
   using ix = typename ct_params_t::ix;
-  using arr_sub_t = blitz::Array<setup::real_t, 1>;
 
   protected:
   // inject dimension-independent ranges
@@ -135,7 +134,6 @@ class slvr_dim<
   public:
   using parent_t = slvr_piggy<ct_params_t>;
   using ix = typename ct_params_t::ix;
-  using arr_sub_t = blitz::Array<setup::real_t, 2>;
 
   protected:
   // inject dimension-independent ranges
