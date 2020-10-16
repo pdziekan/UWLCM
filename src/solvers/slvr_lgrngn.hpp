@@ -43,7 +43,7 @@ class slvr_lgrngn : public std::conditional_t<ct_params_t::sgs_scheme == libmpda
       prtcls->diag_all();
       prtcls->diag_wet_mom(3);
       auto r_l_indomain = this->r_l(this->domain); // rl refrences subdomain of r_l
-      r_l_indomain = typename parent_t::arr_t(prtcls->outbuf(), r_l_indomain.shape(), blitz::duplicateData); // copy in data from outbuf; total liquid third moment of wet radius per kg of dry air [m^3 / kg]
+      r_l_indomain = typename parent_t::arr_t(prtcls->outbuf(), r_l_indomain.shape(), blitz::duplicateData, r_l_indomain.order()); // copy in data from outbuf; total liquid third moment of wet radius per kg of dry air [m^3 / kg]
     }
     this->mem->barrier();
 
@@ -297,7 +297,7 @@ class slvr_lgrngn : public std::conditional_t<ct_params_t::sgs_scheme == libmpda
       prtcls->diag_wet_rng(.5e-6, 25.e-6);
       prtcls->diag_wet_mom(3);
       auto rc = tmp(this->domain);
-      rc = typename parent_t::arr_t(prtcls->outbuf(), rc.shape(), blitz::duplicateData);
+      rc = typename parent_t::arr_t(prtcls->outbuf(), rc.shape(), blitz::duplicateData, rc.order());
     }
     this->mem->barrier();
 
@@ -400,11 +400,11 @@ class slvr_lgrngn : public std::conditional_t<ct_params_t::sgs_scheme == libmpda
       ));
 
       // temporary array of densities - prtcls cant be init'd with 1D profile
-      typename parent_t::arr_t rhod(this->mem->advectee(ix::th).shape()); // TODO: replace all rhod arrays with this->mem->G
+      typename parent_t::arr_t rhod(this->mem->advectee(ix::th).shape(), this->mem->advectee(ix::th).ordering()); // TODO: replace all rhod arrays with this->mem->G
       rhod = (*params.rhod)(this->vert_idx);
 
       // temporary array of pressure - prtcls cant be init'd with 1D profile
-      typename parent_t::arr_t p_e(this->mem->advectee(ix::th).shape()); 
+      typename parent_t::arr_t p_e(this->mem->advectee(ix::th).shape(), this->mem->advectee(ix::th).ordering()); 
       p_e = (*params.p_e)(this->vert_idx);
 
       prtcls->init(
