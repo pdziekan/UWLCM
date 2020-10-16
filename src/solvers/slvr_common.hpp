@@ -35,6 +35,9 @@ class slvr_common : public slvr_dim<ct_params_t>
   int spinup; // number of timesteps
   static constexpr int n_flxs = ct_params_t::n_dims + 1; // number of surface fluxes = number of hori velocities + th + rv
 
+  // array with index of inversion
+  blitz::Array<real_t, parent_t::n_dims-1> k_i; // TODO: allocate k_i with alloc surf + in MPI calc average k_i over all processes
+
 /*
   TODO: an array (map?) of surf fluxes, something like:
   // array with sensible and latent heat surface flux
@@ -42,14 +45,13 @@ class slvr_common : public slvr_dim<ct_params_t>
   std::array<blitz::Array<real_t, parent_t::n_dims>, n_flxs> surf_fluxes;
   */
 
-  parent_t::arr_t &surf_flux_sens,
-                  &surf_flux_lat,
-                  &surf_flux_u,
-                  &surf_flux_v,
-                  &surf_flux_tmp,
-                  &surf_flux_zero, // zero-filled array, find a way to avoid this
-                  &k_i, // index of inversion TODO: in MPI calc average k_i over all processes
-                  &U_ground; 
+  typename parent_t::arr_t &surf_flux_sens,
+                           &surf_flux_lat,
+                           &surf_flux_u,
+                           &surf_flux_v,
+                           &surf_flux_tmp,
+                           &surf_flux_zero, // zero-filled array, find a way to avoid this
+                           &U_ground; 
 
   // global arrays, shared among threads, TODO: in fact no need to share them?
   typename parent_t::arr_t &tmp1,
@@ -516,9 +518,10 @@ class slvr_common : public slvr_dim<ct_params_t>
     U_ground(args.mem->tmp[__FILE__][1][3]),
     surf_flux_tmp(args.mem->tmp[__FILE__][1][4]),
     surf_flux_u(args.mem->tmp[__FILE__][1][5]),
-    k_i(args.mem->tmp[__FILE__][1][6]),
-    surf_flux_v(args.mem->tmp[__FILE__][1][7]) // flux_v needs to be last
+    surf_flux_v(args.mem->tmp[__FILE__][1][6]) // flux_v needs to be last
   {
+    k_i.resize(this->shape(this->hrzntl_subdomain)); 
+    k_i.reindexSelf(this->base(this->hrzntl_subdomain));
     r_l = 0.;
     surf_flux_zero = 0.;
   }
@@ -527,6 +530,6 @@ class slvr_common : public slvr_dim<ct_params_t>
   {
     parent_t::alloc(mem, n_iters);
     parent_t::alloc_tmp_sclr(mem, __FILE__, 7); // tmp1, tmp2, r_l, alpha, beta, F, diss_rate, radiative_flux
-    parent_t::alloc_tmp_sclr(mem, __FILE__, n_flxs+4, "", true); // surf_flux sens/lat/u/v/zero/tmp, U_ground, k_i
+    parent_t::alloc_tmp_sclr(mem, __FILE__, n_flxs+3, "", true); // surf_flux sens/lat/hori_vel/zero/tmp, U_ground
   }
 };
