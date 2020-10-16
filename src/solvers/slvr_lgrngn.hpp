@@ -41,8 +41,8 @@ class slvr_lgrngn : public std::conditional_t<ct_params_t::sgs_scheme == libmpda
     {
       prtcls->diag_all();
       prtcls->diag_wet_mom(3);
-      auto r_l_indomain = this->r_l(this->domain); // rl refrences subdomain of r_l
-      r_l_indomain = typename parent_t::arr_t(prtcls->outbuf(), r_l_indomain.shape(), blitz::duplicateData, r_l_indomain.ordering()); // copy in data from outbuf; total liquid third moment of wet radius per kg of dry air [m^3 / kg]
+      auto r_l_indomain = this->r_l(this->domain); // refrences subdomain of r_l
+      r_l_indomain = typename parent_t::arr_t(prtcls->outbuf(), r_l_indomain.shape(), blitz::duplicateData); // copy in data from outbuf; total liquid third moment of wet radius per kg of dry air [m^3 / kg]
     }
     this->mem->barrier();
 
@@ -261,6 +261,8 @@ class slvr_lgrngn : public std::conditional_t<ct_params_t::sgs_scheme == libmpda
   libcloudphxx::lgrngn::arrinfo_t<real_t> make_arrinfo(
     typename parent_t::arr_t arr
   ) {
+std::cerr << "make arrinfo, strides: " << arr.stride()[0] << " " << arr.stride()[1] << " " << arr.stride()[2] << std::endl;
+
     return libcloudphxx::lgrngn::arrinfo_t<real_t>(
       arr.data(), 
       arr.stride().data()

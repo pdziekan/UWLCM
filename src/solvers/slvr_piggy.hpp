@@ -141,7 +141,8 @@ class slvr_piggy<
       vel_in = vm["vel_in"].as<std::string>();
       std::cout << "piggybacking from: " << vel_in << std::endl;
 
-      in_bfr.resize(this->state(this->vip_ixs[0]).shape(), this->state(this->vip_ixs[0]).ordering());
+      // TODO: in 3D set kij storage order of in_bfr
+      in_bfr.resize(this->state(this->vip_ixs[0]).shape());//, this->state(this->vip_ixs[0]).ordering());
       // open file for in vel
       // TODO: somehow check dimensionality of the input arrays
       try{
