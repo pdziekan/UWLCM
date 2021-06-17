@@ -201,24 +201,48 @@ void setopts_micro(
           std::make_pair<thrust_real_t>(0, case_ptr->Z / si::meters)
         )
       );
+
+      // sea salt CCN
+      rt_params.cloudph_opts_init.rlx_dry_distros.emplace(
+        1.28, // kappa
+        std::make_tuple(
+          std::make_shared<setup::log_dry_radii_gccn<thrust_real_t>> (
+            log(1e-9),      // minimum radius  
+            log(0.8e-6),    // maximum radius
+            10              // concenctration multiplier
+          ),
+          std::make_pair<thrust_real_t>((0.61 + 1.28) / 2., 10000),
+          std::make_pair<thrust_real_t>(0, rt_params.cloudph_opts_init.src_z1)
+          //std::make_pair<thrust_real_t>(0, 700)
+        )
+      );
     }
 
- 
+    // sea salt CCN
+    rt_params.cloudph_opts_init.src_dry_distros.emplace(
+      1.28, // kappa
+      std::make_shared<setup::log_dry_radii_gccn<thrust_real_t>> (
+        log(1e-9),      // minimum radius  
+        log(0.8e-6),    // maximum radius
+        10 / rt_params.dt   // concenctration multiplier
+      )
+    );
+
+    rt_params.cloudph_opts_init.src_switch = 1;
+    rt_params.cloudph_opts_init.src_x0 = 0;
+    rt_params.cloudph_opts_init.src_x1 = case_ptr->X / si::meters;
+    rt_params.cloudph_opts_init.src_y0 = 0;
+    rt_params.cloudph_opts_init.src_y1 = case_ptr->Y / si::meters;
+    rt_params.cloudph_opts_init.src_z0 = 0;
+//    rt_params.cloudph_opts_init.src_z1 = case_ptr->Z / si::meters;
+    rt_params.cloudph_opts_init.src_z1 = case_ptr->gccn_max_height / si::meters;// 700;
+//    rt_params.cloudph_opts_init.src_z1 = 200;
+
+    rt_params.cloudph_opts_init.src_sd_conc = 78;
+
     // GCCNs following Jensen and Nugent, JAS 2016
     if(rt_params.gccn > setup::real_t(0))
     {
-      rt_params.cloudph_opts_init.src_switch = 1;
-      rt_params.cloudph_opts_init.src_x0 = 0;
-      rt_params.cloudph_opts_init.src_x1 = case_ptr->X / si::meters;
-      rt_params.cloudph_opts_init.src_y0 = 0;
-      rt_params.cloudph_opts_init.src_y1 = case_ptr->Y / si::meters;
-      rt_params.cloudph_opts_init.src_z0 = 0;
-//      rt_params.cloudph_opts_init.src_z1 = case_ptr->Z / si::meters;
-      rt_params.cloudph_opts_init.src_z1 = case_ptr->gccn_max_height / si::meters;// 700;
-  //    rt_params.cloudph_opts_init.src_z1 = 200;
-
-      rt_params.cloudph_opts_init.src_sd_conc = 38;
-
 /*
       rt_params.cloudph_opts_init.src_dry_sizes.emplace(
         1.28, // kappa
