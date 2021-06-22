@@ -155,6 +155,15 @@ void setopts_micro(
         )
       );
     }
+
+    rt_params.cloudph_opts_init.dry_distros.emplace(
+      1.28, // kappa
+      std::make_shared<setup::log_dry_radii_gccn<thrust_real_t>> (
+        log(1e-9),      // minimum radius  
+        log(0.8e-6),    // maximum radius
+        10.    // concenctration multiplier
+      )
+    );
  
     // GCCNs using a fitted lognormal function to Jensen and Nugent, JAS 2016
     /*
@@ -173,6 +182,7 @@ void setopts_micro(
 
 //std::cout << "kappa 0.61 dry distros for 1e-14: " << (*(rt_params.cloudph_opts_init.dry_distros[0.61]))(1e-14) << std::endl;
 //std::cout << "kappa 1.28 dry distros for 1e-14: " << (*(rt_params.cloudph_opts_init.dry_distros[1.28]))(1e-14) << std::endl;
+
 
     // CCN relaxation stuff
     if(user_params.ccn_relax)
@@ -204,45 +214,45 @@ void setopts_micro(
 
       // sea salt CCN
       rt_params.cloudph_opts_init.rlx_dry_distros.emplace(
-        1.28, // kappa
+        1.2801, // kappa
         std::make_tuple(
           std::make_shared<setup::log_dry_radii_gccn<thrust_real_t>> (
             log(1e-9),      // minimum radius  
             log(0.8e-6),    // maximum radius
-            10              // concenctration multiplier
+            10.             // concenctration multiplier
           ),
           std::make_pair<thrust_real_t>((0.61 + 1.28) / 2., 10000),
-          std::make_pair<thrust_real_t>(0, rt_params.cloudph_opts_init.src_z1)
+          std::make_pair<thrust_real_t>(0, case_ptr->gccn_max_height / si::meters)
           //std::make_pair<thrust_real_t>(0, 700)
         )
       );
     }
 
     // sea salt CCN
-    rt_params.cloudph_opts_init.src_dry_distros.emplace(
-      1.28, // kappa
-      std::make_shared<setup::log_dry_radii_gccn<thrust_real_t>> (
-        log(1e-9),      // minimum radius  
-        log(0.8e-6),    // maximum radius
-        10 / rt_params.dt   // concenctration multiplier
-      )
-    );
-
-    rt_params.cloudph_opts_init.src_switch = 1;
-    rt_params.cloudph_opts_init.src_x0 = 0;
-    rt_params.cloudph_opts_init.src_x1 = case_ptr->X / si::meters;
-    rt_params.cloudph_opts_init.src_y0 = 0;
-    rt_params.cloudph_opts_init.src_y1 = case_ptr->Y / si::meters;
-    rt_params.cloudph_opts_init.src_z0 = 0;
-//    rt_params.cloudph_opts_init.src_z1 = case_ptr->Z / si::meters;
-    rt_params.cloudph_opts_init.src_z1 = case_ptr->gccn_max_height / si::meters;// 700;
-//    rt_params.cloudph_opts_init.src_z1 = 200;
-
-    rt_params.cloudph_opts_init.src_sd_conc = 78;
+    // cant have more than one sorce dry distro as of now in libcloud!
+//    rt_params.cloudph_opts_init.src_dry_distros.emplace(
+//      1.28, // kappa
+//      std::make_shared<setup::log_dry_radii_gccn<thrust_real_t>> (
+//        log(1e-9),      // minimum radius  
+//        log(0.8e-6),    // maximum radius
+//        10. / rt_params.dt   // concenctration multiplier
+//      )
+//    );
 
     // GCCNs following Jensen and Nugent, JAS 2016
     if(rt_params.gccn > setup::real_t(0))
     {
+      rt_params.cloudph_opts_init.src_switch = 1;
+      rt_params.cloudph_opts_init.src_x0 = 0;
+      rt_params.cloudph_opts_init.src_x1 = case_ptr->X / si::meters;
+      rt_params.cloudph_opts_init.src_y0 = 0;
+      rt_params.cloudph_opts_init.src_y1 = case_ptr->Y / si::meters;
+      rt_params.cloudph_opts_init.src_z0 = 0;
+  //    rt_params.cloudph_opts_init.src_z1 = case_ptr->Z / si::meters;
+      rt_params.cloudph_opts_init.src_z1 = case_ptr->gccn_max_height / si::meters;// 700;
+  //    rt_params.cloudph_opts_init.src_z1 = 200;
+  
+      rt_params.cloudph_opts_init.src_sd_conc = 38;
 /*
       rt_params.cloudph_opts_init.src_dry_sizes.emplace(
         1.28, // kappa
