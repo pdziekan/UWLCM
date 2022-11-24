@@ -280,8 +280,8 @@ namespace cases
         this->mean_rd2 = real_t(.14e-6) * si::metres;
         this->sdev_rd1 = real_t(1.28),
         this->sdev_rd2 = real_t(1.75);
-        this->n1_stp = real_t(11*90e6) / si::cubic_metres, 
-        this->n2_stp = real_t(11*15e6) / si::cubic_metres;
+        this->n1_stp = real_t(90e6) / si::cubic_metres, 
+        this->n2_stp = real_t(15e6) / si::cubic_metres;
         this->z_rlx = z_rlx;
       }
     };

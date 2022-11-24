@@ -498,7 +498,7 @@ void setopts_micro(
             left_edges.at(i),
             left_edges.at(i+1)
           ), 
-          outmom_t<setup::real_t>::value_type::second_type{0} // 0-th moment only, e.g. {0,1,3} would store 0-th, 1-st and 3-rd moments
+          outmom_t<setup::real_t>::value_type::second_type{3} // 0-th moment only, e.g. {0,1,3} would store 0-th, 1-st and 3-rd moments
         ));
       }
     }
