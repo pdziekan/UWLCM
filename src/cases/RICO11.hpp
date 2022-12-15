@@ -227,6 +227,18 @@ namespace cases
           concurr.advectee_global_set(th_global, ix::th);
         }
         {
+          std::mt19937 gen(rng_seed);
+          std::uniform_real_distribution<> dis(-0.1, 0.1);
+          auto rand = std::bind(dis, gen);
+  
+          auto w_global = concurr.advectee_global(ix::w);
+          decltype(concurr.advectee(ix::w)) prtrb(w_global.shape()); // array to store perturbation
+          std::generate(prtrb.begin(), prtrb.end(), rand); // fill it, TODO: is it officialy stl compatible?
+          w_global += prtrb;
+          this->make_cyclic(w_global);
+          concurr.advectee_global_set(w_global, ix::w);
+        }
+        {
           std::mt19937 gen(rng_seed+1); // different seed than in th. NOTE: if the same instance of gen is used in th and rv, for some reason it gives the same sequence in rv as in th despite being advanced in th prtrb
           std::uniform_real_distribution<> dis(-0.025e-3, 0.025e-3);
           auto rand = std::bind(dis, gen);
