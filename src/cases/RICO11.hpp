@@ -34,20 +34,24 @@ namespace cases
 
     inline quantity<si::temperature, real_t> th_l_rico(const real_t &z)
     {
-      quantity<si::temperature, real_t> ret;
-      ret = z < 740. ?
-        297.9 * si::kelvins : 
-        (297.9 + (317. - 297.9)/(4000. - 740) * (z-740)) * si::kelvins;
+//      quantity<si::temperature, real_t> ret;
+//      ret = z < 740. ?
+//        297.9 * si::kelvins : 
+//        (297.9 + (317. - 297.9)/(4000. - 740) * (z-740)) * si::kelvins;
+            quantity<si::temperature, real_t> ret = real_t(300) * std::max(real_t(1), real_t(1 + (z - 500) * 1e-5)) * si::kelvins; // tht_e from pbl in libmpdata++, tht there is 0
+
       return ret;
     }
 
     inline quantity<si::dimensionless, real_t> r_t_rico(const real_t &z)
     {
-      const quantity<si::dimensionless, real_t> q_t = z < 740 ?
-        (16 + (13.8 - 16) / 740. * z) * 1e-3 : 
-        z < 3260 ?
-          (13.8 + (2.4 - 13.8) / (3260 - 740) * (z-740)) * 1e-3 :
-          (2.4 + (1.8 - 2.4) / (4000 - 3260) * (z-3260)) * 1e-3;
+//      const quantity<si::dimensionless, real_t> q_t = z < 740 ?
+//        (16 + (13.8 - 16) / 740. * z) * 1e-3 : 
+//        z < 3260 ?
+//          (13.8 + (2.4 - 13.8) / (3260 - 740) * (z-740)) * 1e-3 :
+//          (2.4 + (1.8 - 2.4) / (4000 - 3260) * (z-3260)) * 1e-3;
+            const quantity<si::dimensionless, real_t> q_t = 0;
+
       return q_t;
     }
 
