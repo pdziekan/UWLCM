@@ -216,7 +216,7 @@ namespace cases
         // NOTE: all processes do this, but ultimately only perturbation calculated by MPI rank 0 is used
         {
           std::mt19937 gen(rng_seed);
-          std::uniform_real_distribution<> dis(-0.1, 0.1);
+          std::uniform_real_distribution<> dis(-0.0005, 0.0005);
           auto rand = std::bind(dis, gen);
   
           auto th_global = concurr.advectee_global(ix::th);
