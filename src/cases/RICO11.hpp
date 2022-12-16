@@ -24,33 +24,31 @@ namespace cases
       T_SST = real_t(299.8) * si::kelvins;
     const quantity<si::length, real_t> 
       z_0  = 0    * si::metres,
-      Z_def    = 1500 * si::metres, 
-      X_def    = 3200 * si::metres, 
-      Y_def    = 3200 * si::metres; 
-    const real_t z_abs = 1200;
+      Z_def    = 4000 * si::metres, 
+      X_def    = 12800 * si::metres, 
+      Y_def    = 12800 * si::metres; 
+    const real_t z_abs = 3000;
 //    const real_t z_i = 795; //initial inversion height
-    const quantity<si::length, real_t> z_rlx = 25 * si::metres;
+    const quantity<si::length, real_t> z_rlx = 100 * si::metres;
     const quantity<si::length, real_t> gccn_max_height = 450 * si::metres; // below cloud base
 
     inline quantity<si::temperature, real_t> th_l_rico(const real_t &z)
     {
-//      quantity<si::temperature, real_t> ret;
-//      ret = z < 740. ?
-//        297.9 * si::kelvins : 
-//        (297.9 + (317. - 297.9)/(4000. - 740) * (z-740)) * si::kelvins;
-            quantity<si::temperature, real_t> ret = real_t(300) * std::max(real_t(1), real_t(1 + (z - 500) * 1e-5)) * si::kelvins; // tht_e from pbl in libmpdata++, tht there is 0
+      quantity<si::temperature, real_t> ret;
+      ret = z < 740. ?
+        297.9 * si::kelvins : 
+        (297.9 + (317. - 297.9)/(4000. - 740) * (z-740)) * si::kelvins;
 
       return ret;
     }
 
     inline quantity<si::dimensionless, real_t> r_t_rico(const real_t &z)
     {
-//      const quantity<si::dimensionless, real_t> q_t = z < 740 ?
-//        (16 + (13.8 - 16) / 740. * z) * 1e-3 : 
-//        z < 3260 ?
-//          (13.8 + (2.4 - 13.8) / (3260 - 740) * (z-740)) * 1e-3 :
-//          (2.4 + (1.8 - 2.4) / (4000 - 3260) * (z-3260)) * 1e-3;
-            const quantity<si::dimensionless, real_t> q_t = 0;
+      const quantity<si::dimensionless, real_t> q_t = z < 740 ?
+        (16 + (13.8 - 16) / 740. * z) * 1e-3 : 
+        z < 3260 ?
+          (13.8 + (2.4 - 13.8) / (3260 - 740) * (z-740)) * 1e-3 :
+          (2.4 + (1.8 - 2.4) / (4000 - 3260) * (z-3260)) * 1e-3;
 
       return q_t;
     }
