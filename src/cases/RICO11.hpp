@@ -99,7 +99,7 @@ namespace cases
         real_t operator()(const real_t &z) const
         {
 	  //return 0;
-          return -9.9;// + 2e-3 * z; 
+          return -9.9 + 2e-3 * z; 
         }
         BZ_DECLARE_FUNCTOR(u);
       };
