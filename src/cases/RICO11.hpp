@@ -98,8 +98,8 @@ namespace cases
       {
         real_t operator()(const real_t &z) const
         {
-	  return 0;
-          return -9.9 + 2e-3 * z; 
+	  //return 0;
+          return -9.9;// + 2e-3 * z; 
         }
         BZ_DECLARE_FUNCTOR(u);
       };
@@ -174,7 +174,7 @@ namespace cases
                        typename std::enable_if<enable_sgs>::type* = 0) 
       {
         parent_t::setopts_sgs(params);
-        params.cdrag = 0.1; // NOTE: in SMG simulations, we do not apply the height correction to drag coefficient (i.e. it is assumed that U ground is at 20 m)
+        params.cdrag = 0.0; // NOTE: in SMG simulations, we do not apply the height correction to drag coefficient (i.e. it is assumed that U ground is at 20 m)
       }
   
       template <class T, class U>
@@ -311,7 +311,8 @@ namespace cases
                                const real_t &U_ground_z,                   // altituted at which U_ground is diagnosed
                                const int &timestep, const real_t &dt, const real_t &dx, const real_t &dy) override
       {
-	              surf_flux_uv = - real_t(0.1) * U_ground * uv_ground * -1 * (this->rhod_0 / si::kilograms * si::cubic_meters); // [ kg m/s / (m^2 s) ]
+	      surf_flux_uv = 0
+//	              surf_flux_uv = - real_t(0.1) * U_ground * uv_ground * -1 * (this->rhod_0 / si::kilograms * si::cubic_meters); // [ kg m/s / (m^2 s) ]
 
 //        surf_flux_uv = - formulas::surf_flux_coeff_scaling<real_t>(U_ground_z, 20) * real_t(0.001229) * U_ground * uv_ground * -1 * (this->rhod_0 / si::kilograms * si::cubic_meters); // [ kg m/s / (m^2 s) ]
       }
@@ -384,7 +385,7 @@ namespace cases
       {
         real_t operator()(const real_t &z) const
         {
-		return 0;
+	//	return 0;
           return -3.8;
         }
         BZ_DECLARE_FUNCTOR(v);
