@@ -24,10 +24,10 @@ namespace cases
       T_SST = real_t(299.8) * si::kelvins;
     const quantity<si::length, real_t> 
       z_0  = 0    * si::metres,
-      Z_def    = 4000 * si::metres, 
-      X_def    = 12800 * si::metres, 
-      Y_def    = 12800 * si::metres; 
-    const real_t z_abs = 3000;
+      Z_def    = 1500 * si::metres, 
+      X_def    = 3200 * si::metres, 
+      Y_def    = 3200 * si::metres; 
+    const real_t z_abs = 1200;
 //    const real_t z_i = 795; //initial inversion height
     const quantity<si::length, real_t> z_rlx = 100 * si::metres;
     const quantity<si::length, real_t> gccn_max_height = 450 * si::metres; // below cloud base
