@@ -178,11 +178,11 @@ namespace cases
       template <class T, class U>
       void setopts_hlpr(T &params, const U &user_params)
       {
-        params.buoyancy_wet = true;
-        params.subsidence = true;
+        params.buoyancy_wet = false;
+        params.subsidence = false;
         params.vel_subsidence = false;
         params.friction = true;
-        params.coriolis = true;
+        params.coriolis = false;
         params.radiation = false;
 
         this->setopts_sgs(params);
