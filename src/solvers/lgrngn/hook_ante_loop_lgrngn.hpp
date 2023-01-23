@@ -153,6 +153,7 @@ void slvr_lgrngn<ct_params_t>::hook_ante_loop(int nt)
     this->record_aux_const("diag_incloud_time", "lgrngn", params.cloudph_opts_init.diag_incloud_time);  
     this->record_aux_const("rng_seed", "lgrngn", params.cloudph_opts_init.rng_seed);  
     this->record_aux_const("rng_seed_init", "lgrngn", params.cloudph_opts_init.rng_seed_init);  
+    this->record_aux_const("rng_seed_init_switch", params.cloudph_opts_init.rng_seed_init_switch);
     this->record_aux_const("async", "lgrngn", params.async);  
     this->record_aux_const("adve", "lgrngn", params.cloudph_opts.adve);  
     this->record_aux_const("sedi", "lgrngn", params.cloudph_opts.sedi);  
