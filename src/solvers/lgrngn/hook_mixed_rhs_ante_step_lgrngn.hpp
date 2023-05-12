@@ -53,11 +53,67 @@ void slvr_lgrngn<ct_params_t>::hook_mixed_rhs_ante_step()
 
   negtozero(this->mem->advectee(ix::rv)(this->ijk), "rv at start of mixed_rhs_ante_step");
 
-  this->generate_stretching_parameters(std::random_device{}(), libmpdataxx::formulae::fractal::stretch_params::d_distro_t::LES_th_supersaturated);
-  this->reconstruct_refinee(ix::th);
-  this->generate_stretching_parameters(std::random_device{}(), libmpdataxx::formulae::fractal::stretch_params::d_distro_t::LES_rv_supersaturated);
-  this->reconstruct_refinee(ix::rv);
+  // ---- reconstruction of th_l ----
+  this->generate_stretching_parameters(std::random_device{}());//, libmpdataxx::formulae::fractal::stretch_params::d_distro_t::LES_th_supersaturated);
 
+  // store a copy of th
+  auto& th_copy(this->tmp1);
+  th_copy(this->ijk) = this->mem->advectee(ix::th)(this->ijk);
+  
+  // calculate th_l in place of th using r_l on resolved scales
+  const auto l_tri = libcloudphxx::common::const_cp::l_tri<setup::real_t>() * si::kilograms / si::joules;
+  const auto c_pd = libcloudphxx::common::moist_air::c_pd<setup::real_t>() * si::kilograms * si::kelvins / si::joules;
+  this->mem->advectee(ix::th)(this->ijk) -= this->r_l(this->ijk) * l_tri / c_pd;  // TODO:  l_v(T) instead of l_tri; 
+                                                                                  // TODO2: divide by exner(p)=T/theta 
+                                                                                  // NOTE:  r_l was calculated after condensation in previous step 
+                                                                                  //        and was advected with upwind
+  
+  // do the reconstruction of th_l
+  this->reconstruct_refinee(ix::th);
+
+  // calculate rl_ref, r_l on refined scales
+  // NOTE:  very similar to part of diag_rx
+  // NOTE2: this could be done in diag_rl, but diag_rl is called in ante_delayed_step, hence we would need to advect rl_ref just like we advect r_l...
+  // NOTE3: prtcls could be currently doing some computations? Would this be a problem?
+  typename parent_t::arr_t &rl_ref(this->tmp_ref);
+  if(this->rank == 0)
+  {
+    prtcls->diag_wet_mom(3);
+    rl_ref(this->domain_ref) = typename parent_t::arr_t(prtcls->outbuf(), this->shape(this->domain_ref), blitz::neverDeleteData);
+  }
+  this->mem->barrier();
+  
+  // calculate reconstructed th from reconstructed th_l and from r_l on reconstructed scales
+  this->mem->refinee(this->ix_r2r.at(ix::th))(this->ijk_ref) += 4./3. * 1000. * 3.14159 * rl_ref(this->ijk_ref) * l_tri / c_pd; // TODO: same as above in calculation of th_l 
+  
+  // restore th from the backup
+  this->mem->barrier();
+  this->mem->advectee(ix::th)(this->ijk) = th_copy(this->ijk);
+
+  // ---- reconstruction of r_tot ---- TODO: make common function with th_l
+  // TODO: generate different parameters than for th?
+  //this->generate_stretching_parameters(std::random_device{}());//, libmpdataxx::formulae::fractal::stretch_params::d_distro_t::LES_rv_supersaturated);
+
+  // store a copy of rv
+  auto& rv_copy(this->tmp1);
+  rv_copy(this->ijk) = this->mem->advectee(ix::rv)(this->ijk);
+  
+  // calculate rtot in place of th using rv on resolved scales
+  this->mem->advectee(ix::rv)(this->ijk) += this->r_l(this->ijk);
+  
+  // do the reconstruction of rt
+  this->reconstruct_refinee(ix::rv);
+  
+  // calculate reconstructed rv from reconstructed rt and from rl on reconstructed scales
+  // NOTE: rl_ref already caculated when reconstructing th
+  this->mem->refinee(this->ix_r2r.at(ix::rv))(this->ijk_ref) -= 4./3. * 1000. * 3.14159 * rl_ref(this->ijk_ref);
+  
+  // restore th from the backup
+  this->mem->barrier();
+  this->mem->advectee(ix::rv)(this->ijk) = rv_copy(this->ijk);
+
+  // ---- post-reconstruction sanity checks ----
+  
   //negtozero(this->mem->refinee(this->ix_r2r.at(ix::rv))(this->ijk_ref), "refined rv at start of mixed_rhs_ante_step");
   negtozero2(this->mem->refinee(this->ix_r2r.at(ix::rv))(this->ijk_ref), "refined rv at start of mixed_rhs_ante_step",
 	     this->negref_dbg_arrs, this->negref_dbg_arr_names);
