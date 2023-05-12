@@ -78,6 +78,7 @@ void slvr_lgrngn<ct_params_t>::hook_mixed_rhs_ante_step()
   typename parent_t::arr_t &rl_ref(this->tmp_ref);
   if(this->rank == 0)
   {
+    prtcls->diag_all();
     prtcls->diag_wet_mom(3);
     rl_ref(this->domain_ref) = typename parent_t::arr_t(prtcls->outbuf(), this->shape(this->domain_ref), blitz::neverDeleteData);
   }
