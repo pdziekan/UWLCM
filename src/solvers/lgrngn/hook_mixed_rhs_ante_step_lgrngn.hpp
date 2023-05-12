@@ -71,6 +71,30 @@ void slvr_lgrngn<ct_params_t>::hook_mixed_rhs_ante_step()
   // do the reconstruction of th_l
   this->reconstruct_refinee(ix::th);
 
+  
+  // assuring previous async step finished Needs to be done before we diag wet_mom3
+#if defined(STD_FUTURE_WORKS)
+    if (
+      params.async && 
+      this->timestep != 0 && // ... but not in first timestep ...
+      ((this->timestep ) % this->outfreq != 0) // ... and not after diag call, note: timestep is updated after ante_step
+    ) {
+      assert(ftr.valid());
+#if defined(UWLCM_TIMING)
+      tbeg = setup::clock::now();
+#endif
+#if defined(UWLCM_TIMING)
+      parent_t::tasync_gpu += ftr.get();
+#else
+      ftr.get();
+#endif
+#if defined(UWLCM_TIMING)
+      tend = setup::clock::now();
+      parent_t::tasync_wait += std::chrono::duration_cast<setup::timer>( tend - tbeg );
+#endif
+    } else assert(!ftr.valid()); 
+#endif
+
   // calculate rl_ref, r_l on refined scales
   // NOTE:  very similar to part of diag_rx
   // NOTE2: this could be done in diag_rl, but diag_rl is called in ante_delayed_step, hence we would need to advect rl_ref just like we advect r_l...
@@ -149,29 +173,6 @@ void slvr_lgrngn<ct_params_t>::hook_mixed_rhs_ante_step()
       Cz.reindex(this->zero) /= (params.profs.rhod)(this->vert_idx); // TODO: should be interpolated, since theres a shift between positions of rhod and Cz
     }
     */
-
-    // assuring previous async step finished ...
-#if defined(STD_FUTURE_WORKS)
-    if (
-      params.async && 
-      this->timestep != 0 && // ... but not in first timestep ...
-      ((this->timestep ) % this->outfreq != 0) // ... and not after diag call, note: timestep is updated after ante_step
-    ) {
-      assert(ftr.valid());
-#if defined(UWLCM_TIMING)
-      tbeg = setup::clock::now();
-#endif
-#if defined(UWLCM_TIMING)
-      parent_t::tasync_gpu += ftr.get();
-#else
-      ftr.get();
-#endif
-#if defined(UWLCM_TIMING)
-      tend = setup::clock::now();
-      parent_t::tasync_wait += std::chrono::duration_cast<setup::timer>( tend - tbeg );
-#endif
-    } else assert(!ftr.valid()); 
-#endif
 
     // change src and rlx flags after the first step. needs to be done after async finished, because async uses opts reference
     if(this->timestep == 1)
