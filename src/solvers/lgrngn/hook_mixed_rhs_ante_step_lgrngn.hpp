@@ -71,7 +71,14 @@ void slvr_lgrngn<ct_params_t>::hook_mixed_rhs_ante_step()
   // do the reconstruction of th_l
   this->reconstruct_refinee(ix::th);
 
-  
+
+  // calculate rl_ref, r_l on refined scales
+  // NOTE:  very similar to part of diag_rx
+  // NOTE2: this could be done in diag_rl, but diag_rl is called in ante_delayed_step, hence we would need to advect rl_ref just like we advect r_l...
+  // NOTE3: prtcls could be currently doing some computations? Would this be a problem?
+  typename parent_t::arr_t &rl_ref(this->tmp_ref);
+  if(this->rank == 0)
+  {
   // assuring previous async step finished Needs to be done before we diag wet_mom3
 #if defined(STD_FUTURE_WORKS)
     if (
@@ -94,14 +101,6 @@ void slvr_lgrngn<ct_params_t>::hook_mixed_rhs_ante_step()
 #endif
     } else assert(!ftr.valid()); 
 #endif
-
-  // calculate rl_ref, r_l on refined scales
-  // NOTE:  very similar to part of diag_rx
-  // NOTE2: this could be done in diag_rl, but diag_rl is called in ante_delayed_step, hence we would need to advect rl_ref just like we advect r_l...
-  // NOTE3: prtcls could be currently doing some computations? Would this be a problem?
-  typename parent_t::arr_t &rl_ref(this->tmp_ref);
-  if(this->rank == 0)
-  {
     prtcls->diag_all();
     prtcls->diag_wet_mom(3);
     rl_ref(this->domain_ref) = typename parent_t::arr_t(prtcls->outbuf(), this->shape(this->domain_ref), blitz::neverDeleteData);
