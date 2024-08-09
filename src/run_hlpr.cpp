@@ -159,6 +159,8 @@ void run(const int (&nps)[n_dims], const user_params_t &user_params)
   p.outvars.insert({ix::th, {"th", "[K]"}});
   p.outvars.insert({ix::u, {"u", "[m/s]"}});
   p.outvars.insert({ix::w, {"w", "[m/s]"}});
+  p.outvars.insert({ix::tr1, {"tracer1", "[1]"}});
+  p.outvars.insert({ix::tr2, {"tracer2", "[1]"}});
   if (n_dims > 2)
   {
     // WARNING: assumes certain ordering of variables to avoid tedious template programming !

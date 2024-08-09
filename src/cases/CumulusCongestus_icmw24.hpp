@@ -68,6 +68,16 @@ namespace cases
       return interpolate_CAMP2EX_sounding("aerosol_conc_factor", rhod);
     }
 
+    inline quantity<si::dimensionless, real_t> tracer1_cc_icmw24(const real_t &z)
+    {
+      return z<=700 ? 1 : 0;
+    }
+
+    inline quantity<si::dimensionless, real_t> tracer2_cc_icmw24(const real_t &z)
+    {
+      return z<=9000 ? 1.-z/9000. : 0;
+    }
+
     template<class case_ct_params_t, int n_dims>
     class CumulusCongestusCommon_icmw24 : public CumulusCongestusCommon<case_ct_params_t, n_dims>
     {
@@ -104,6 +114,24 @@ namespace cases
         BZ_DECLARE_FUNCTOR(r_t_fctr);
       };
 
+      struct tracer1_fctr
+      {
+        quantity<si::dimensionless, real_t> operator()(const real_t &z) const
+        {
+          return tracer1_cc_icmw24(z);
+        }
+        BZ_DECLARE_FUNCTOR(tracer1_fctr);
+      };
+
+      struct tracer2_fctr
+      {
+        quantity<si::dimensionless, real_t> operator()(const real_t &z) const
+        {
+          return tracer2_cc_icmw24(z);
+        }
+        BZ_DECLARE_FUNCTOR(tracer2_fctr);
+      };
+
       struct u_t : hori_vel_t
       {
         real_t operator()(const real_t &z) const
@@ -127,6 +155,8 @@ namespace cases
         concurr.advectee(ix::th) = th_std_fctr{}(index * dz);
         concurr.advectee(ix::rv) = r_t_fctr{}(index * dz);
         concurr.advectee(ix::u) = u(index * dz);
+        concurr.advectee(ix::tr1) = tracer1_fctr{}(index * dz);
+        concurr.advectee(ix::tr2) = tracer2_fctr{}(index * dz);
 
         parent_t::intcond_hlpr(concurr, rhod, rng_seed, index, 0.1, 0.025e-3, (this->Z / si::metres) - 1000);
       }
