@@ -69,7 +69,7 @@ class slvr_blk_1m_common : public std::conditional_t<ct_params_t::sgs_scheme == 
     parent_t::diag();
 
     // recording precipitation flux
-    this->record_aux_dsc("precip_rate", precipitation_rate);
+//    this->record_aux_dsc("precip_rate", precipitation_rate);
   } 
 
   void rc_src();

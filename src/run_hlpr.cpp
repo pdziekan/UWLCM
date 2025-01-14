@@ -159,15 +159,15 @@ void run(const int (&nps)[n_dims], const user_params_t &user_params)
   setopts_micro<solver_t>(p, user_params, case_ptr);
 
   // set outvars
-  p.outvars.insert({ix::rv, {"rv", "[kg kg-1]"}});
-  p.outvars.insert({ix::th, {"th", "[K]"}});
-  p.outvars.insert({ix::u, {"u", "[m/s]"}});
-  p.outvars.insert({ix::w, {"w", "[m/s]"}});
-  if (n_dims > 2)
-  {
-    // WARNING: assumes certain ordering of variables to avoid tedious template programming !
-    p.outvars.insert({1, {"v", "[m/s]"}});
-  }
+//  p.outvars.insert({ix::rv, {"rv", "[kg kg-1]"}});
+//  p.outvars.insert({ix::th, {"th", "[K]"}});
+//  p.outvars.insert({ix::u, {"u", "[m/s]"}});
+//  p.outvars.insert({ix::w, {"w", "[m/s]"}});
+//  if (n_dims > 2)
+//  {
+//    // WARNING: assumes certain ordering of variables to avoid tedious template programming !
+//    p.outvars.insert({1, {"v", "[m/s]"}});
+//  }
 
   // solver instantiation
   std::unique_ptr<concurr_any_t> concurr;
