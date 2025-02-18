@@ -52,6 +52,10 @@ void setopts_micro(
   rt_params.outvars.insert({solver_t::ix::rc, {"rc", "[kg kg-1]"}});
   rt_params.outvars.insert({solver_t::ix::rr, {"rr", "[kg kg-1]"}});
 
+  rt_params.outvars.insert({solver_t::ix::tr_inv, {"tr_inv", "[1]"}});
+  rt_params.outvars.insert({solver_t::ix::tr_col, {"tr_col", "[1]"}});
+  rt_params.outvars.insert({solver_t::ix::tr_col2km, {"tr_col2km", "[1]"}});
+
   if(rt_params.aerosol_independent_of_rhod)
     std::cerr << "UWLCM warning: aerosol_independent_of_rhod has no effect on blk_1m microphysics" << std::endl;
   if(rt_params.aerosol_conc_factor.size()!=0)

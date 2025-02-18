@@ -140,6 +140,11 @@ class slvr_blk_1m_common : public std::conditional_t<ct_params_t::sgs_scheme == 
     negcheck(this->mem->advectee(ix::rv)(this->ijk), "rv after condevap");
     negcheck(this->mem->advectee(ix::rc)(this->ijk), "rc after condevap");
     negcheck(this->mem->advectee(ix::rr)(this->ijk), "rr after condevap");
+
+
+    this->mem->advectee(ix::tr_col)(this->ijk) = 0;
+    this->mem->advectee(ix::tr_col)(this->ijk) = blitz::tensor::i * this->di > 2000;
+
     this->mem->barrier();
   }
 

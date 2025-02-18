@@ -86,9 +86,9 @@ struct ct_params_2D_blk_1m : ct_params_common
 struct ct_params_3D_blk_1m : ct_params_common
 {
   enum { n_dims = 3 };
-  enum { n_eqns = 7 };
+  enum { n_eqns = 10 };
   struct ix { enum {
-    u, v, w, th, rv, rc, rr, 
+    u, v, w, th, rv, rc, rr, tr_inv, tr_col, tr_col2km,
     vip_i=u, vip_j=v, vip_k=w, vip_den=-1
   }; };
 };

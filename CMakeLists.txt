@@ -73,6 +73,7 @@ if(UWLCM_TIMING)
   target_compile_options(uwlcm PRIVATE "-DUWLCM_TIMING")
 endif()
 
+
 # handle the disable compilation options
 if(UWLCM_DISABLE)
   set(UWLCM_DISABLE_PREFIX "UWLCM_DISABLE_")
