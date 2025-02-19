@@ -24,6 +24,7 @@ class slvr_blk_1m_common : public std::conditional_t<ct_params_t::sgs_scheme == 
   private:
   // a 2D/3D array with copy of the environmental total pressure of dry air 
   typename parent_t::arr_t &p_e;
+  real_t tr_reset_time = 0;
 
   void condevap()
   {
@@ -88,6 +89,16 @@ class slvr_blk_1m_common : public std::conditional_t<ct_params_t::sgs_scheme == 
   void hook_mixed_rhs_ante_loop()
   {}
 
+  void reset_tr()
+  {
+    const real_t col_separation = 6000,
+                 col_width = 2000,
+                 zi_init = 850;
+
+    this->mem->advectee(ix::tr_inv)(this->ijk) = blitz::tensor::k * this->dk > zi_init;
+    this->mem->advectee(ix::tr_col)(this->ijk).reindex(this->origin) = (blitz::fmod((blitz::tensor::i-1) * this->di, col_separation) >= (col_separation - col_width)) * (blitz::fmod((blitz::tensor::j-1) * this->dj, col_separation) >= (col_separation - col_width));
+  }
+
   // deals with initial supersaturation
   void hook_ante_loop(int nt)
   {
@@ -104,6 +115,8 @@ class slvr_blk_1m_common : public std::conditional_t<ct_params_t::sgs_scheme == 
     condevap();
 
     parent_t::hook_ante_loop(nt); // forcings after adjustments
+
+    reset_tr();
 
     // recording parameters
     if(this->rank==0)
@@ -141,9 +154,11 @@ class slvr_blk_1m_common : public std::conditional_t<ct_params_t::sgs_scheme == 
     negcheck(this->mem->advectee(ix::rc)(this->ijk), "rc after condevap");
     negcheck(this->mem->advectee(ix::rr)(this->ijk), "rr after condevap");
 
-
-    this->mem->advectee(ix::tr_col)(this->ijk) = 0;
-    this->mem->advectee(ix::tr_col)(this->ijk) = blitz::tensor::i * this->di > 2000;
+    if(this->timestep * this->dt > tr_reset_time)
+    {
+      reset_tr();
+      tr_reset_time += 1800;
+    }
 
     this->mem->barrier();
   }

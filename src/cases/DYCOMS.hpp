@@ -57,12 +57,6 @@ namespace cases
         rt_above = RF == 1 ? 1.5e-3 : (5. - 3. * (1. - exp((z_i[RF - 1] - z)/500.))) * 1e-3;
       return z < z_i[RF - 1] ? rt_below : rt_above;
     }
-
-    template <int RF>
-    quantity<si::dimensionless, real_t> tr_inv_dycoms(const real_t &z)
-    {
-      return z < z_i[RF - 1] ? 0 : 1;
-    }
   
     template<class case_ct_params_t, int RF, int n_dims>
     class DycomsCommon : public Anelastic<case_ct_params_t, n_dims>
@@ -95,17 +89,6 @@ namespace cases
         BZ_DECLARE_FUNCTOR(r_t_fctr);
       };
 
-    
-      // passive tracer aboe inversion
-      struct tr_inv_fctr
-      {
-        quantity<si::dimensionless, real_t> operator()(const real_t &z) const
-        {
-          return tr_inv_dycoms<RF>(z);
-        }
-        BZ_DECLARE_FUNCTOR(tr_inv_fctr);
-      };
-    
       // initial standard potential temp at height z, assuming theta_std = theta_l (spinup needed)
       struct th_std_fctr
       {
