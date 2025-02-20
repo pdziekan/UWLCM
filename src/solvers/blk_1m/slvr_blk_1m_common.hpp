@@ -89,13 +89,16 @@ class slvr_blk_1m_common : public std::conditional_t<ct_params_t::sgs_scheme == 
   void hook_mixed_rhs_ante_loop()
   {}
 
-  void reset_tr()
+  void reset_tr_inv()
+  {
+    const real_t zi_init = 850;
+    this->mem->advectee(ix::tr_inv)(this->ijk) = blitz::tensor::k * this->dk > zi_init;
+  }
+
+  void reset_tr_col()
   {
     const real_t col_separation = 6000,
-                 col_width = 2000,
-                 zi_init = 850;
-
-    this->mem->advectee(ix::tr_inv)(this->ijk) = blitz::tensor::k * this->dk > zi_init;
+                 col_width = 2000;
     this->mem->advectee(ix::tr_col)(this->ijk).reindex(this->origin) = (blitz::fmod((blitz::tensor::i-1) * this->di, col_separation) >= (col_separation - col_width)) * (blitz::fmod((blitz::tensor::j-1) * this->dj, col_separation) >= (col_separation - col_width));
   }
 
@@ -116,7 +119,8 @@ class slvr_blk_1m_common : public std::conditional_t<ct_params_t::sgs_scheme == 
 
     parent_t::hook_ante_loop(nt); // forcings after adjustments
 
-    reset_tr();
+    reset_tr_inv();
+    reset_tr_col();
 
     // recording parameters
     if(this->rank==0)
@@ -156,8 +160,8 @@ class slvr_blk_1m_common : public std::conditional_t<ct_params_t::sgs_scheme == 
 
     if(this->timestep * this->dt > tr_reset_time)
     {
-      reset_tr();
-      tr_reset_time += 1800;
+      reset_tr_col();
+      tr_reset_time += 3600;
     }
 
     this->mem->barrier();
