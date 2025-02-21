@@ -117,10 +117,10 @@ class slvr_blk_1m_common : public std::conditional_t<ct_params_t::sgs_scheme == 
     // deal with initial supersaturation, TODO: don't do it here (vide slvr_lgrngn)
     condevap();
 
-    parent_t::hook_ante_loop(nt); // forcings after adjustments
-
     reset_tr_inv();
     reset_tr_col();
+
+    parent_t::hook_ante_loop(nt); // forcings after adjustments
 
     // recording parameters
     if(this->rank==0)
