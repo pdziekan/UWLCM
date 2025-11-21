@@ -72,9 +72,14 @@ void setopts_micro(
     ("dev_id", po::value<int>()->default_value(-1), "CUDA backend - id of device to be used")
     // free parameters
     ("exact_sstp_cond", po::value<bool>()->default_value(rt_params.cloudph_opts_init.exact_sstp_cond), "exact(per-particle) logic for substeps for condensation")
+    ("adaptive_sstp_cond", po::value<bool>()->default_value(rt_params.cloudph_opts_init.adaptive_sstp_cond), "adaptive number of substeps for condensation")
+    ("sstp_cond_adapt_drw2_eps", po::value<setup::real_t>()->default_value(rt_params.sstp_cond_adapt_drw2_eps), "tolerance for adaptive substepping in condensation (drw2_err <= sstp_cond_adapt_eps * rw2)")
+    ("sstp_cond_adapt_drw2_max", po::value<setup::real_t>()->default_value(rt_params.sstp_cond_adapt_drw2_max), "tolerance for adaptive substepping in condensation (drw2 < sstp_cond_adapt_drw2_max * rw2)")
+    ("sstp_cond_mix", po::value<bool>()->default_value(rt_params.cloudph_opts_init.sstp_cond_mix), "mixing of th and rv changes after each substep of condensation")
     ("diag_incloud_time", po::value<bool>()->default_value(rt_params.cloudph_opts_init.diag_incloud_time), "diagnose incloud time of droplets")
     ("sd_conc_large_tail", po::value<bool>()->default_value(rt_params.cloudph_opts_init.sd_conc_large_tail), "add SDs to better represent the large tail")
     ("sstp_cond", po::value<int>()->default_value(rt_params.cloudph_opts_init.sstp_cond), "no. of substeps for condensation")
+    ("sstp_cond_act", po::value<int>()->default_value(rt_params.cloudph_opts_init.sstp_cond_act), "no. of substeps for condensation for droplets that activate")
     ("sstp_coal", po::value<int>()->default_value(rt_params.cloudph_opts_init.sstp_coal), "no. of substeps for coalescence")
     ("sstp_chem", po::value<int>()->default_value(rt_params.cloudph_opts_init.sstp_chem), "no. of substeps for chemistry")
     // 
@@ -420,6 +425,11 @@ void setopts_micro(
   rt_params.cloudph_opts_init.exact_sstp_cond = vm["exact_sstp_cond"].as<bool>();
   rt_params.cloudph_opts_init.diag_incloud_time = vm["diag_incloud_time"].as<bool>();
   rt_params.cloudph_opts_init.sd_conc_large_tail = vm["sd_conc_large_tail"].as<bool>();
+  rt_params.cloudph_opts_init.adaptive_sstp_cond = vm["adaptive_sstp_cond"].as<bool>();
+  rt_params.cloudph_opts_init.sstp_cond_adapt_drw2_eps = vm["sstp_cond_adapt_drw2_eps"].as<setup::real_t>();
+  rt_params.cloudph_opts_init.sstp_cond_adapt_drw2_max = vm["sstp_cond_adapt_drw2_max"].as<setup::real_t>();
+  rt_params.cloudph_opts_init.sstp_cond_mix = vm["sstp_cond_mix"].as<bool>();
+  rt_params.cloudph_opts_init.sstp_cond_act = vm["sstp_cond_act"].as<int>();
 
   rt_params.cloudph_opts_init.rng_seed = user_params.rng_seed;
   rt_params.cloudph_opts_init.rng_seed_init = user_params.rng_seed_init;

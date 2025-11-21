@@ -150,6 +150,11 @@ void slvr_lgrngn<ct_params_t>::hook_ante_loop(int nt)
     this->record_aux_const("sstp_coal", "lgrngn", params.cloudph_opts_init.sstp_coal);  
     this->record_aux_const("sstp_chem", "lgrngn", params.cloudph_opts_init.sstp_chem);  
     this->record_aux_const("exact_sstp_cond", "lgrngn", params.cloudph_opts_init.exact_sstp_cond);  
+    this->record_aux_const("adaptive_sstp_cond", "lgrngn", params.cloudph_opts_init.adaptive_sstp_cond);  
+    this->record_aux_const("sstp_cond_adapt_drw2_max", "lgrngn", params.cloudph_opts_init.sstp_cond_adapt_drw2_max);  
+    this->record_aux_const("sstp_cond_adapt_drw2_eps", "lgrngn", params.cloudph_opts_init.sstp_cond_adapt_drw2_eps);  
+    this->record_aux_const("sstp_cond_mix", "lgrngn", params.cloudph_opts_init.sstp_cond_mix);  
+    this->record_aux_const("sstp_cond_act", "lgrngn", params.cloudph_opts_init.sstp_cond_act);  
     this->record_aux_const("diag_incloud_time", "lgrngn", params.cloudph_opts_init.diag_incloud_time);  
     this->record_aux_const("rng_seed", "lgrngn", params.cloudph_opts_init.rng_seed);  
     this->record_aux_const("rng_seed_init", "lgrngn", params.cloudph_opts_init.rng_seed_init);  
