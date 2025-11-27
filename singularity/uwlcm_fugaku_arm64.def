@@ -1,0 +1,293 @@
+Bootstrap: docker
+From: redhat/ubi8:8.9
+
+%post
+  # Increase timeout for slow downloads
+  echo 'timeout=14400' >> /etc/yum.conf
+  
+  # Install EPEL repository for additional packages
+  dnf --noplugins --releasever=8.9 -y install https://dl.fedoraproject.org/pub/epel/epel-release-latest-8.noarch.rpm
+  
+  # BEGIN Fujitsu TCS Part - Install Fugaku-specific packages
+  cat <<EOF > /etc/yum.repos.d/fugaku.repo
+[FUGAKU-AppStream]
+name=FUGAKU-AppStream
+baseurl=http://10.4.38.1/pxinst/repos/FUGAKU/AppStream
+enabled=1
+gpgcheck=0
+[FUGAKU-BaseOS]
+name=FUGAKU-BaseOS
+baseurl=http://10.4.38.1/pxinst/repos/FUGAKU/BaseOS
+enabled=1
+gpgcheck=0
+EOF
+  
+  # Install Fujitsu TCS packages and dependencies
+  dnf --noplugins --releasever=8.9 -y install \
+    xpmem libevent tcl less hwloc openssh-clients \
+    gcc-c++ gcc-gfortran elfutils-libelf-devel \
+    FJSVpxtof FJSVpxple FJSVpxpsm FJSVpxkrm FJSVxoslibmpg \
+    papi-devel
+  # END Fujitsu TCS Part
+
+  # Install standard RHEL development tools and dependencies
+  dnf --noplugins --releasever=8.9 -y install \
+    sudo \
+    cmake \
+    make \
+    autoconf \
+    automake \
+    libtool \
+    pkg-config \
+    git \
+    ca-certificates \
+    vim \
+    curl \
+    wget \
+    gdb \
+    bzip2 \
+    xz \
+    unzip \
+    which \
+    bison \
+    flex \
+    m4 \
+    zlib-devel \
+    python3-devel \
+    python3-pip \
+    python3-numpy \
+    python3-scipy \
+    gnuplot
+  
+  # Install Python packages via pip (some not available in RHEL repos)
+  pip3 install --no-cache-dir \
+    h5py \
+    matplotlib \
+    pytest \
+    cffi \
+    pandas
+  
+  # Set locale
+  localedef -i en_US -f UTF-8 en_US.UTF-8
+  
+  # Set up Fujitsu MPI environment
+  # The MPI compilers from TCSDS should be available after installing FJSVxoslibmpg
+  export OMPI_CC=gcc
+  export OMPI_CXX=g++
+  export OMPI_FC=gfortran
+  
+  # Use Fugaku's MPI wrappers
+  export CC=mpicc
+  export CXX=mpicxx
+  export FC=mpifort
+  
+  # Set A64FX-specific optimization flags
+  export CFLAGS="-march=armv8.2-a+sve -mtune=a64fx -O3"
+  export CXXFLAGS="-march=armv8.2-a+sve -mtune=a64fx -O3"
+  export FFLAGS="-march=armv8.2-a+sve -mtune=a64fx -O3"
+  
+  # Build directory for temporary builds
+  mkdir -p /tmp/build
+  cd /tmp/build
+  
+  # Build and install Blitz++
+  echo "Building Blitz++..."
+  git clone --depth=1 https://github.com/blitzpp/blitz.git
+  cd blitz
+  mkdir build && cd build
+  cmake .. -DCMAKE_INSTALL_PREFIX=/usr/local \
+           -DCMAKE_BUILD_TYPE=Release
+  make -j$(nproc)
+  make install
+  cd /tmp/build
+  rm -rf blitz
+  
+  # Build and install Boost with MPI support
+  echo "Building Boost with MPI..."
+  wget -q https://archives.boost.io/release/1.88.0/source/boost_1_88_0.tar.gz
+  tar xf boost_1_88_0.tar.gz
+  cd boost_1_88_0
+  
+  # Get Python version dynamically
+  PYTHON_VERSION=$(python3 -c "import sys; print(f'{sys.version_info.major}.{sys.version_info.minor}')")
+  
+  # Configure Boost build
+  cat > $HOME/user-config.jam <<EOFBOOST
+using python : ${PYTHON_VERSION} : /usr/bin/python3 : /usr/include/python${PYTHON_VERSION} : /usr/lib64 ;
+using mpi : mpicxx ;
+EOFBOOST
+  
+  cat $HOME/user-config.jam
+  
+  ./bootstrap.sh --prefix=/usr/local \
+    --with-libraries=chrono,regex,serialization,mpi,atomic,thread,date_time,system,iostreams,timer,filesystem,program_options,python
+  
+  ./b2 -j$(nproc) \
+    variant=release \
+    link=shared \
+    threading=multi \
+    runtime-link=shared \
+    cxxflags="${CXXFLAGS}" \
+    install
+  
+  cd /tmp/build
+  rm -rf boost_1_88_0*
+  
+  # Update library cache
+  ldconfig
+  
+  # Build and install HDF5 with parallel support
+  echo "Building HDF5 with MPI..."
+  wget -q https://support.hdfgroup.org/ftp/HDF5/releases/hdf5-1.12/hdf5-1.12.1/src/hdf5-1.12.1.tar.gz
+  tar xf hdf5-1.12.1.tar.gz
+  cd hdf5-1.12.1
+  
+  CXXFLAGS="-w ${CXXFLAGS}" CFLAGS="-w ${CFLAGS}" \
+    ./configure \
+    --enable-parallel \
+    --enable-cxx \
+    --enable-unsupported \
+    --enable-threadsafe \
+    --prefix=/usr/local \
+    CC=mpicc CXX=mpicxx FC=mpifort
+  
+  make -j$(nproc) || (cat config.log && exit 1)
+  make install
+  
+  cd /tmp/build
+  rm -rf hdf5-1.12.1*
+  
+  # Update library cache
+  ldconfig
+  
+  # Install NetCDF-C with HDF5 support
+  echo "Building NetCDF-C..."
+  wget -q https://downloads.unidata.ucar.edu/netcdf-c/4.9.2/netcdf-c-4.9.2.tar.gz
+  tar xf netcdf-c-4.9.2.tar.gz
+  cd netcdf-c-4.9.2
+  
+  CPPFLAGS="-I/usr/local/include" LDFLAGS="-L/usr/local/lib" \
+    ./configure --prefix=/usr/local --enable-parallel-tests \
+    CC=mpicc
+  
+  make -j$(nproc)
+  make install
+  
+  cd /tmp/build
+  rm -rf netcdf-c-4.9.2*
+  
+  # Install NetCDF-Fortran
+  echo "Building NetCDF-Fortran..."
+  wget -q https://downloads.unidata.ucar.edu/netcdf-fortran/4.6.1/netcdf-fortran-4.6.1.tar.gz
+  tar xf netcdf-fortran-4.6.1.tar.gz
+  cd netcdf-fortran-4.6.1
+  
+  CPPFLAGS="-I/usr/local/include" LDFLAGS="-L/usr/local/lib" \
+    LD_LIBRARY_PATH=/usr/local/lib \
+    ./configure --prefix=/usr/local \
+    CC=mpicc FC=mpifort
+  
+  make -j$(nproc)
+  make install
+  
+  cd /tmp/build
+  rm -rf netcdf-fortran-4.6.1*
+  
+  # Update library cache
+  ldconfig
+  
+  # Install Thrust (header-only library)
+  echo "Installing Thrust..."
+  git clone --depth=1 https://github.com/NVIDIA/thrust.git
+  cp -r thrust/thrust /usr/local/include/
+  rm -rf thrust
+  
+  # Install odeint with Thrust v2 fix
+  echo "Installing odeint with Thrust v2 fix..."
+  git clone -b Thrust_2 --depth=1 https://github.com/pdziekan/odeint.git
+  cp -r odeint/include/boost/numeric/odeint/* /usr/local/include/boost/numeric/odeint/
+  rm -rf odeint
+  
+  # Install gnuplot-iostream (header-only)
+  echo "Installing gnuplot-iostream..."
+  wget -q https://github.com/dstahlke/gnuplot-iostream/archive/refs/heads/master.zip -O gnuplot-iostream.zip
+  unzip -q gnuplot-iostream.zip
+  cp gnuplot-iostream-master/gnuplot-iostream.h /usr/local/include/
+  rm -rf gnuplot-iostream*
+  
+  # Clean up
+  cd /
+  rm -rf /tmp/build
+  dnf clean all
+  rm -rf /var/cache/dnf
+
+%environment
+  # Locale settings
+  export LC_ALL=en_US.UTF-8
+  export LANG=en_US.UTF-8
+  
+  # Compiler environment
+  export OMPI_CC=gcc
+  export OMPI_CXX=g++
+  export OMPI_FC=gfortran
+  export CC=mpicc
+  export CXX=mpicxx
+  export FC=mpifort
+  
+  # A64FX optimization flags
+  export CFLAGS="-march=armv8.2-a+sve -mtune=a64fx -O3"
+  export CXXFLAGS="-march=armv8.2-a+sve -mtune=a64fx -O3"
+  export FFLAGS="-march=armv8.2-a+sve -mtune=a64fx -O3"
+  
+  # Library paths
+  export LD_LIBRARY_PATH=/usr/local/lib:/usr/local/lib64:${LD_LIBRARY_PATH}
+  export PKG_CONFIG_PATH=/usr/local/lib/pkgconfig:/usr/local/lib64/pkgconfig:${PKG_CONFIG_PATH}
+
+%labels
+  Author pdziekan
+  Version 1.0
+  Description UWLCM Singularity image for Fugaku supercomputer with TCSDS/MPI
+  Base redhat/ubi8:8.9
+  Architecture ARM64/A64FX
+
+%help
+  This is a Singularity container for UWLCM on Fugaku supercomputer.
+  
+  Features:
+  - Fujitsu TCS (Technical Computing Suite) with MPI support
+  - ARM64 A64FX processor optimizations (-march=armv8.2-a+sve -mtune=a64fx)
+  - HDF5 with parallel I/O support
+  - NetCDF-C and NetCDF-Fortran
+  - Boost with MPI support
+  - Blitz++, Thrust, and odeint libraries
+  
+  To build libraries inside the container:
+  
+  1. Build and install libmpdata++:
+     cd /path/to/libmpdata++
+     mkdir build && cd build
+     cmake .. -DCMAKE_INSTALL_PREFIX=/install/path -DCMAKE_BUILD_TYPE=Release
+     make -j
+     make install
+  
+  2. Build and install libcloudph++:
+     cd /path/to/libcloudph++
+     mkdir build && cd build
+     cmake .. -DCMAKE_INSTALL_PREFIX=/install/path -DCMAKE_BUILD_TYPE=Release
+     make -j
+     make install
+  
+  3. Build UWLCM:
+     cd /path/to/UWLCM
+     mkdir build && cd build
+     cmake .. -Dlibmpdata++_DIR=/install/path/share/libmpdata++ \
+              -Dlibcloudph++_DIR=/install/path/lib/cmake/libcloudph++ \
+              -DCMAKE_BUILD_TYPE=Release
+     make -j
+  
+  Available microphysics backends:
+  - OpenMP: --micro=lgrngn --backend=OpenMP
+  - Serial: --micro=lgrngn --backend=serial
+  - Bulk: --micro=blk_1m or --micro=blk_2m
+  
+  Note: CUDA backends are not available (CPU-only build)
