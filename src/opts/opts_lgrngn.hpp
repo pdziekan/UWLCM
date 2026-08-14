@@ -389,7 +389,33 @@ void setopts_micro(
         );
       }
     }
-   }
+  
+    // seeding in the Cloudlab case
+    if(true /* case == setup::case_t::cloudlab */ ) // incompatible with gccn
+    {
+      // TODO: src_x0, src_x1, src_y0 and src_y1 should exclude half of outside cells, like x0, x1, y0, y1?
+      rt_params.cloudph_opts_init.src_type = libcloudphxx::lgrngn::src_t::simple;
+      rt_params.cloudph_opts_init.src_x0 = 1200;
+      rt_params.cloudph_opts_init.src_x1 = 1600;
+      rt_params.cloudph_opts_init.src_y0 = 1200;
+      rt_params.cloudph_opts_init.src_y1 = 1300;
+      rt_params.cloudph_opts_init.src_z0 = 340;
+      rt_params.cloudph_opts_init.src_z1 = 360; // 360
+
+      // CLOUDLAB MIP seeding with AgI particles,
+      // they should be 'highly hygroscopic' according to the setup, so assumie coating with hygroscopiic material (sa in many seeding flares?), hence large kappa
+      // AgI diameter between 100nm and 400nm, but Omanovic 2024 used a parameterisation for 400nm, so we aim at 400 nm
+      // hence we set rd^3 = (200nm) ^ 3 + (200nm) ^ 3 and soluble fraction = 0.5
+      // also: libcloud has only INP_t=mineral for now, which doesn't suit AgI
+      // however, seeding rate is not known either and the goal is to match ice crystal concentration (of around 1/cc?), so
+      // parameters like kappa, soluble fraction and nucleatin parameterisation can be tuned
+      rt_params.cloudph_opts.src_dry_sizes.emplace(
+      libcloudphxx::lgrngn::kappa_soluble_fraction_t<thrust_real_t>(thrust_real_t(1.2), thrust_real_t(0.5)), // kappa, soluble fraction 
+        std::map<setup::real_t, std::tuple<setup::real_t, int, int> > {
+          {0.252e-6, {1e6, 1, 1}} // radius, rate 1/m3/s (@STP), no. of SDs, supstep interval
+      });
+    }
+  }
 /*  else if(unit_test)
     boost::assign::ptr_map_insert<
       setup::log_dry_radii_unit_test<thrust_real_t> // value type
