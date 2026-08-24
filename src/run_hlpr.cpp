@@ -134,6 +134,10 @@ void run(const int (&nps)[n_dims], const user_params_t &user_params)
 
   // copy user_params
   p.user_params = user_params;
+  p.setopts_ante_step = [case_instance = case_ptr.get()](rt_params_t &params, const int timestep)
+  {
+    case_instance->setopts(params, timestep);
+  };
 
   // some runtime parameters defined in libmpdata++ are passed via user_params
   p.outdir = user_params.outdir;

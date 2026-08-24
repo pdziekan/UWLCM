@@ -391,7 +391,7 @@ void setopts_micro(
     }
   
     // seeding in the Cloudlab case
-    if(true /* case == setup::case_t::cloudlab */ ) // incompatible with gccn
+    if(user_params.model_case == "cloudlab") // incompatible with gccn
     {
       // TODO: src_x0, src_x1, src_y0 and src_y1 should exclude half of outside cells, like x0, x1, y0, y1?
       rt_params.cloudph_opts_init.src_type = libcloudphxx::lgrngn::src_t::simple;

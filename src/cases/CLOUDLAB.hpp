@@ -1,6 +1,7 @@
 #pragma once
 #include <random>
 #include <fstream>
+#include <libcloudph++/lgrngn/opts.hpp>
 #include "detail/CLOUDLAB_sounding/CLOUDLAB_init_data.hpp"
 #include "Anelastic.hpp"
 
@@ -13,6 +14,8 @@ namespace cases
     const quantity<si::length, real_t>   X_def = 3000 * si::metres;
     const quantity<si::length, real_t>   Y_def = 3000 * si::metres;
     const real_t z_abs = 1000;
+    constexpr real_t seeding_start_time = 2500;
+    constexpr real_t seeding_end_time = seeding_start_time + 6 * 60;
     
     constexpr real_t fricvelsq = 0.25; // forest roughness length of 0.5 m, u* = 0.5 m/s
     
@@ -159,6 +162,36 @@ namespace cases
         params.radiation = false;
 
         this->setopts_sgs(params);
+      }
+
+      template <class T>
+      void setopts_ante_step_hlpr(
+        T &params,
+        const int timestep,
+        typename std::enable_if<std::is_same<
+          decltype(T::cloudph_opts),
+          libcloudphxx::lgrngn::opts_t<real_t>
+        >::value>::type* = 0
+      )
+      {
+        const real_t time = timestep * params.dt;
+        params.cloudph_opts.src = time >= seeding_start_time && time < seeding_end_time;
+      }
+
+      template <class T>
+      void setopts_ante_step_hlpr(
+        T &,
+        const int,
+        typename std::enable_if<!std::is_same<
+          decltype(T::cloudph_opts),
+          libcloudphxx::lgrngn::opts_t<real_t>
+        >::value>::type* = 0
+      )
+      {}
+
+      void setopts(rt_params_t &params, const int timestep) override
+      {
+        setopts_ante_step_hlpr(params, timestep);
       }
   
 

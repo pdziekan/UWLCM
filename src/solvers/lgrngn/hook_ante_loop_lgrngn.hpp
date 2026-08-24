@@ -39,8 +39,7 @@ void slvr_lgrngn<ct_params_t>::hook_ante_loop(int nt)
     assert(params.backend != libcloudphxx::lgrngn::undefined);
     assert(params.dt != 0); 
 
-    // if(params.gccn > 0)
-      params.cloudph_opts.src = true;
+    params.cloudph_opts.src = params.gccn > 0;
 
     params.cloudph_opts.rlx = false;
 
