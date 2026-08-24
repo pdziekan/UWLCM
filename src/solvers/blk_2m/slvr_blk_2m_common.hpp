@@ -164,6 +164,7 @@ class slvr_blk_2m_common : public std::conditional_t<ct_params_t::sgs_scheme == 
   void setopts_ante_step() override
   {
     params.setopts_ante_step(params, this->timestep);
+    parent_t::setopts_ante_step();
   }
 
   void hook_post_step()

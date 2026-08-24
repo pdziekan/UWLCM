@@ -110,6 +110,7 @@ class slvr_lgrngn : public std::conditional_t<ct_params_t::sgs_scheme == libmpda
   void setopts_ante_step() override
   {
     params.setopts_ante_step(params, this->timestep);
+    parent_t::setopts_ante_step();
   }
 
   bool get_rain() { return params.cloudph_opts.coal; }
