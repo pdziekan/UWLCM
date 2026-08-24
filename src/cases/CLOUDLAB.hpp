@@ -43,14 +43,19 @@ namespace cases
       return real_t(*(s_up-1) + (pos - *(pos_up-1)) / (*pos_up - *(pos_up-1)) * (*s_up - *(s_up-1)));
     }
 
+    // we rotate coordinate system to have v=0 and u>0 at 350 m (seeding height), to make it easier to seed perpendicular to the wind
+    // note: this breaks the geostrophic wind assumption, but we don't use it anyway, so it's fine
+    // note2: setting window=1 ruins v=0 at 350 m, but seeding is still perpendicular to the wind, so it's fine (?)
+    const real_t coord_rotation_angle = atan2(interpolate_CLOUDLAB_sounding("v", 350.), interpolate_CLOUDLAB_sounding("u", 350.)); 
+
     inline quantity<si::velocity, real_t> u_clab(const real_t &z)
     {
-      return interpolate_CLOUDLAB_sounding("u", z) * si::meters / si::seconds;
+      return real_t(interpolate_CLOUDLAB_sounding("u", z) * cos(coord_rotation_angle) + interpolate_CLOUDLAB_sounding("v", z) * sin(coord_rotation_angle)) * si::meters / si::seconds;
     }
     
     inline quantity<si::velocity, real_t> v_clab(const real_t &z)
     {
-      return interpolate_CLOUDLAB_sounding("v", z) * si::meters / si::seconds;
+      return real_t(-interpolate_CLOUDLAB_sounding("u", z) * sin(coord_rotation_angle) + interpolate_CLOUDLAB_sounding("v", z) * cos(coord_rotation_angle)) * si::meters / si::seconds;
     }
 
     inline quantity<si::temperature, real_t> th_l_clab(const real_t &z)
@@ -363,11 +368,6 @@ namespace cases
       void set_profs(detail::profiles_t &profs, int nz, const user_params_t &user_params)
       {
         parent_t::set_profs(profs, nz, user_params);
-        // geostrophic wind equal to the initial velocity profile
-        blitz::firstIndex k;
-        real_t dz = (this->Z / si::metres) / (nz-1);
-        profs.geostr[0] = this->u(k * dz); 
-        profs.geostr[1] = v(k * dz); 
       }
 
       public:
