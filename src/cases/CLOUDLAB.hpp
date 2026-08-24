@@ -2,6 +2,7 @@
 #include <random>
 #include <fstream>
 #include <libcloudph++/lgrngn/opts.hpp>
+#include <libcloudph++/lgrngn/ccn_source.hpp>
 #include "detail/CLOUDLAB_sounding/CLOUDLAB_init_data.hpp"
 #include "Anelastic.hpp"
 
@@ -162,7 +163,43 @@ namespace cases
         params.radiation = false;
 
         this->setopts_sgs(params);
+        setopts_lgrngn_hlpr(params);
       }
+
+      template <class T>
+      void setopts_lgrngn_hlpr(
+        T &params,
+        typename std::enable_if<std::is_same<
+          decltype(T::cloudph_opts),
+          libcloudphxx::lgrngn::opts_t<real_t>
+        >::value>::type* = 0
+      )
+      {
+        params.cloudph_opts_init.src_type = libcloudphxx::lgrngn::src_t::simple;
+        params.cloudph_opts_init.src_x0 = 1200;
+        params.cloudph_opts_init.src_x1 = 1600;
+        params.cloudph_opts_init.src_y0 = 1200;
+        params.cloudph_opts_init.src_y1 = 1300;
+        params.cloudph_opts_init.src_z0 = 340;
+        params.cloudph_opts_init.src_z1 = 360;
+
+        params.cloudph_opts.src_dry_sizes.emplace(
+          libcloudphxx::lgrngn::kappa_soluble_fraction_t<real_t>(real_t(1.2), real_t(0.5)),
+          std::map<real_t, std::tuple<real_t, int, int>>{
+            {real_t(0.252e-6), {real_t(1e6), 1, 1}}
+          }
+        );
+      }
+
+      template <class T>
+      void setopts_lgrngn_hlpr(
+        T &,
+        typename std::enable_if<!std::is_same<
+          decltype(T::cloudph_opts),
+          libcloudphxx::lgrngn::opts_t<real_t>
+        >::value>::type* = 0
+      )
+      {}
 
       template <class T>
       void setopts_ante_step_hlpr(
