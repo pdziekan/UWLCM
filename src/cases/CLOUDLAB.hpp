@@ -3,6 +3,7 @@
 #include <fstream>
 #include <libcloudph++/lgrngn/opts.hpp>
 #include <libcloudph++/lgrngn/ccn_source.hpp>
+#include <libcloudph++/common/ice_nucleation.hpp>
 #include "detail/CLOUDLAB_sounding/CLOUDLAB_init_data.hpp"
 #include "Anelastic.hpp"
 
@@ -99,7 +100,7 @@ namespace cases
         BZ_DECLARE_FUNCTOR(th_std_fctr);
       };
 
-      struct r_t_fctr
+      struct r_t_fctr 
       {
         quantity<si::dimensionless, real_t> operator()(const real_t &z) const
         {
@@ -175,18 +176,19 @@ namespace cases
         >::value>::type* = 0
       )
       {
+        params.cloudph_opts_init.inp_type = libcloudphxx::common::ice_nucleation::INP_t::AgI;
         params.cloudph_opts_init.src_type = libcloudphxx::lgrngn::src_t::simple;
-        params.cloudph_opts_init.src_x0 = 1200;
-        params.cloudph_opts_init.src_x1 = 1600;
-        params.cloudph_opts_init.src_y0 = 1200;
-        params.cloudph_opts_init.src_y1 = 1300;
+        params.cloudph_opts_init.src_x0 = 1400;
+        params.cloudph_opts_init.src_x1 = 1500;
+        params.cloudph_opts_init.src_y0 = 1300;
+        params.cloudph_opts_init.src_y1 = 1700;
         params.cloudph_opts_init.src_z0 = 340;
         params.cloudph_opts_init.src_z1 = 360;
 
         params.cloudph_opts.src_dry_sizes.emplace(
           libcloudphxx::lgrngn::kappa_soluble_fraction_t<real_t>(real_t(1.2), real_t(0.5)),
           std::map<real_t, std::tuple<real_t, int, int>>{
-            {real_t(0.252e-6), {real_t(1e6), 1, 1}}
+            {real_t(0.252e-6), {real_t(1e5), 1, 1}}
           }
         );
       }
