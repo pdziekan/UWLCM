@@ -7,6 +7,10 @@
 #include <libcloudph++/common/output.hpp>
 #include "../detail/get_uwlcm_git_revision.hpp"
 #include "../detail/ForceParameters.hpp"
+#include "../detail/rad_target.hpp"
+#include <fstream>
+#include <memory>
+#include <iostream>
 #include <boost/asio/ip/host_name.hpp>
 
 struct smg_tag  {};
@@ -42,6 +46,10 @@ class slvr_common : public slvr_dim<ct_params_t>
 
   // array with index of inversion
   blitz::Array<real_t, parent_t::n_dims-1> k_i; // TODO: allocate k_i with alloc surf + in MPI calc average k_i over all processes
+
+  // prescribed domain-mean BL radiative cooling (--rad_target_file) and its log, see forcings/radiation.hpp
+  detail::rad_target_t rad_target;
+  std::shared_ptr<std::ofstream> rad_log; // shared_ptr keeps the solver copyable
 
 /*
   TODO: an array (map?) of surf fluxes, something like:

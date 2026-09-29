@@ -17,6 +17,7 @@
 #include "run_hlpr.hpp"
 
 #include "detail/ct_params.hpp"
+#include "detail/rad_target.hpp"
 
 #if !defined(UWLCM_DISABLE_2D_LGRNGN) || !defined(UWLCM_DISABLE_3D_LGRNGN)
   #include "solvers/slvr_lgrngn.hpp"
@@ -90,6 +91,8 @@ int main(int argc, char** argv)
       // ("sgs", po::value<bool>()->default_value(false) , "turn Eulerian SGS model on/off")
       ("sgs", po::value<std::string>()->default_value("iles"), "Eulerian SGS model; one of: iles, smg, smgani")
       ("sgs_delta", po::value<setup::real_t>()->default_value(-1) , "subgrid-scale turbulence model length scale [m]. If negative, sgs_delta = dz")
+      ("rad_target_file", po::value<std::string>()->default_value(""), "text file with two columns, time [s] and domain-mean boundary-layer radiative cooling [W/m2]; if set, F_0 and F_1 of the DYCOMS-style radiation are rescaled every time step to impose this cooling (log in outdir/rad_scaling.txt)")
+      ("rad_scale_max", po::value<setup::real_t>()->default_value(5), "upper limit on the rescaling factor of F_0 and F_1 (used with --rad_target_file)")
       ("help", "produce a help message (see also --micro X --help)")
       ("relax_th_rv", po::value<bool>()->default_value(false) , "relax per-level mean theta and rv to a desired (case-specific) profile")
 
@@ -182,6 +185,13 @@ int main(int argc, char** argv)
 //     bool sgs = vm["sgs"].as<bool>();
     std::string sgs = vm["sgs"].as<std::string>();
     user_params.sgs_delta = vm["sgs_delta"].as<setup::real_t>();
+    user_params.rad_target_file = vm["rad_target_file"].as<std::string>();
+    user_params.rad_scale_max = vm["rad_scale_max"].as<setup::real_t>();
+    if(!user_params.rad_target_file.empty())
+    {
+      detail::rad_target_t check; check.load(user_params.rad_target_file); // throws with a clear message if missing or malformed
+      if(!(user_params.rad_scale_max > 0)) throw std::runtime_error("UWLCM: rad_scale_max must be positive");
+    }
     
 // sanity check if desired options were compiled
 #if defined(UWLCM_DISABLE_PIGGYBACKER)

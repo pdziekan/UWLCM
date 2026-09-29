@@ -32,8 +32,53 @@ void slvr_common<ct_params_t>::radiation(typename parent_t::arr_t &rv)
     auto ground = idxperm::pi<perm_no>(0, this->hrzntl_subdomain);
     auto noground = idxperm::pi<perm_no>(rng_t(1, nz-1), this->hrzntl_subdomain);
     auto notop = idxperm::pi<perm_no>(rng_t(0, nz-2), this->hrzntl_subdomain);
+
+    // optional rescaling of F_0 and F_1 to impose a prescribed domain-mean
+    // boundary-layer radiative cooling (--rad_target_file), see detail/rad_target.hpp
+    real_t rad_s = 1;
+    if(!params.user_params.rad_target_file.empty())
+    {
+      // each thread keeps its own copy of the (small) target series
+      if(rad_target.empty())
+        rad_target.load(params.user_params.rad_target_file);
+
+      // at the ground, tmp1 now holds -kappa * LWP of each column;
+      // radiative_flux is used as scratch here, it is overwritten right below
+      radiative_flux(ground) = 1. - exp(tmp1(ground));
+
+      int n_columns = 1;
+      for(int d = 0; d < parent_t::n_dims; ++d)
+        if(d != perm_no) n_columns *= this->mem->distmem.grid_size[d];
+
+      // collective call: sums over all threads and MPI processes, returns the total to every thread
+      const double C_eff = this->mem->sum(this->rank, radiative_flux, this->hrzntl_slice(0), false) / n_columns;
+
+      const double F_0 = params.ForceParameters.F_0,
+                   F_1 = params.ForceParameters.F_1;
+      const double target = rad_target(this->time);
+      const double s_raw  = detail::rad_scale_factor_raw(target, F_0, F_1, C_eff);
+      rad_s = detail::rad_scale_factor(target, F_0, F_1, C_eff, params.user_params.rad_scale_max);
+
+      // log from a single thread of a single process
+      if(this->rank == 0 && this->mem->distmem.rank() == 0)
+      {
+        // (no exceptions here: other threads would wait forever at the next barrier)
+        if(!rad_log)
+        {
+          const std::string fname = params.user_params.outdir + "/rad_scaling.txt";
+          rad_log = std::make_shared<std::ofstream>(fname);
+          if(rad_log->is_open())
+            *rad_log << "# time[s] C_eff BL_cooling_unscaled[W/m2] target[W/m2] s_raw s_applied\n";
+          else
+            std::cerr << "UWLCM warning: cannot open " << fname << ", radiative scaling factors will not be logged" << std::endl;
+        }
+        if(rad_log->is_open())
+          *rad_log << this->time << ' ' << C_eff << ' ' << (F_0 - F_1) * C_eff << ' '
+                   << target << ' ' << s_raw << ' ' << rad_s << '\n';
+      }
+    }
   
-    radiative_flux(ijk) = params.ForceParameters.F_0 * exp(tmp1(ijk)); 
+    radiative_flux(ijk) = rad_s * params.ForceParameters.F_0 * exp(tmp1(ijk)); 
   
     // calc sum of r_l below certain level and store it in tmp1
     tmp1(ijk) = r_l(ijk);
@@ -48,7 +93,7 @@ void slvr_common<ct_params_t>::radiation(typename parent_t::arr_t &rv)
     for(int z = 1 ; z <= nz-1; ++z)
       tmp1(idxperm::pi<perm_no>(z, this->hrzntl_subdomain)) += tmp1(idxperm::pi<perm_no>(z-1, this->hrzntl_subdomain));
 
-    radiative_flux(ijk) += params.ForceParameters.F_1 * exp(tmp1(ijk));
+    radiative_flux(ijk) += rad_s * params.ForceParameters.F_1 * exp(tmp1(ijk));
   
     // free atmosphere part
     radiative_flux(ijk).reindex(this->zero) += where(this->vert_idx > k_i.reindex(this->zero_plane)(blitz::tensor::i, blitz::tensor::j),  // works even in 2D ?!?!

@@ -11,6 +11,8 @@ struct user_params_t
   setup::real_t X, Y, Z, dt;
   std::string outdir, model_case;
   setup::real_t sgs_delta;
+  std::string rad_target_file = "";   // prescribed domain-mean BL radiative cooling, see detail/rad_target.hpp
+  setup::real_t rad_scale_max = 5;    // upper limit on the rescaling factor of F_0 and F_1
   quantity<si::length, setup::real_t> mean_rd1, mean_rd2;		
   quantity<si::dimensionless, setup::real_t> sdev_rd1, sdev_rd2;		
   quantity<power_typeof_helper<si::length, static_rational<-3>>::type, setup::real_t> n1_stp, n2_stp;		
