@@ -4,9 +4,6 @@
 #include "../detail/blitz_hlpr_fctrs.hpp"
 #include "../formulae/stress_formulae.hpp"
 
-<<<<<<< HEAD
-// common isotropic/anisotropic Smagorinsky stuff
-=======
 /**
  * @brief Subgrid-scale (SGS) turbulence solver with Smagorinsky closure.
  *
@@ -15,7 +12,6 @@
  *
  * @tparam ct_params_t Compile-time parameters controlling solver configuration.
  */
->>>>>>> master
 template <class ct_params_t>
 class slvr_sgs_smg_common : public slvr_common<ct_params_t>
 {
@@ -134,64 +130,6 @@ class slvr_sgs_smg_common : public slvr_common<ct_params_t>
                                ) / 4;
   }
 
-<<<<<<< HEAD
-=======
-  /**
-   * @brief Computes turbulent viscosity using the Smagorinsky model.
-   */
-  void multiply_sgs_visc()
-  {
-    static_assert(static_cast<libmpdataxx::solvers::stress_diff_t>(ct_params_t::stress_diff) == libmpdataxx::solvers::compact,
-                  "UWLCM smagorinsky model requires compact stress differencing");
-
-    tdef_sq(this->ijk) = formulae::stress::calc_tdef_sq_cmpct<ct_params_t::n_dims>(this->tau, this->ijk);
-    calc_rcdsn_num();
-
-    this->k_m(this->ijk).reindex(this->zero) = where(
-                                 rcdsn_num(this->ijk).reindex(this->zero) / prandtl_num < 1,
-                                   pow2(this->smg_c * (*this->params.mix_len)(this->vert_idx))
-                                   * sqrt(tdef_sq(this->ijk).reindex(this->zero)
-                                   * (1 - rcdsn_num(this->ijk).reindex(this->zero) / prandtl_num)),
-                                   0
-                                );
-    this->k_m(this->hrzntl_slice(0)) = this->k_m(this->hrzntl_slice(1));
-    this->xchng_sclr(this->k_m, this->ijk, 1);
-    
-   
-    // calculate dissipation rate
-
-    // TODO: c_eps should be an adjustable parameter for different cases
-    real_t c_eps = 0.845;
-    this->diss_rate(this->ijk).reindex(this->zero) = c_eps *
-      pow3(this->k_m(this->ijk).reindex(this->zero) / (this->c_m * (*this->params.mix_len)(this->vert_idx)))
-      / (*this->params.mix_len)(this->vert_idx);
-
-    formulae::stress::multiply_tnsr_cmpct<ct_params_t::n_dims, ct_params_t::opts>(this->tau, 1.0, this->k_m, *this->mem->G, this->ijkm_sep);
-
-    this->xchng_sgs_tnsr_offdiag(this->tau, this->tau_srfc, this->ijk, this->ijkm);
-    
-    //this->mem->barrier();
-    //if (this->rank == 0)
-    //{
-    //  std::cout << "tdef_sq: " << min(tdef_sq(this->domain)) << " " << max(tdef_sq(this->domain)) << std::endl;
-    //  std::cout << "rcdsn: " << min(rcdsn_num(this->domain)) << " " << max(rcdsn_num(this->domain)) << std::endl;
-    //  std::cout << "k_m:   " << min(this->k_m(this->domain)) << " " << max(this->k_m(this->domain)) << std::endl;
-    //  std::cout << "tau0:   " << min(this->tau[0](this->domain)) << " " << max(this->tau[0](this->domain)) << std::endl;
-    //  std::cout << "tau1:   " << min(this->tau[1](this->domain)) << " " << max(this->tau[1](this->domain)) << std::endl;
-    //  std::cout << "tau2:   " << min(this->tau[2](this->domain)) << " " << max(this->tau[2](this->domain)) << std::endl;
-    //  //if (this->timestep % static_cast<int>(this->outfreq) == 0)
-    //  //{
-    //  //  std::cout << "k_m profile" << std::endl;
-    //  //  for (int k = 0; k < 301; ++k)
-    //  //  {
-    //  //    std::cout << k << ' ' << sum(this->k_m(rng_t(0, 128), rng_t(0, 128), k)) / (129. * 129.) << std::endl;
-    //  //  }
-    //  //}
-    //}
-    //this->mem->barrier();
-  }
-
->>>>>>> master
   void calc_sgs_flux(int s)
   {
     if (s != ix::th && s != ix::rv) return;
@@ -303,11 +241,9 @@ class slvr_sgs_smg_common : public slvr_common<ct_params_t>
       }
     }
   }
-<<<<<<< HEAD
 
   virtual void calc_sgs_diag_fields() = 0;
 
-=======
   /**
    * @brief Updates the right-hand side (RHS) with explicit SGS contributions.
    *
@@ -315,7 +251,6 @@ class slvr_sgs_smg_common : public slvr_common<ct_params_t>
    * @param dt Time step length.
    * @param at Stage of time-stepping
    */
->>>>>>> master
   void update_rhs(
     libmpdataxx::arrvec_t<typename parent_t::arr_t> &rhs,
     const typename parent_t::real_t &dt,
@@ -334,15 +269,12 @@ class slvr_sgs_smg_common : public slvr_common<ct_params_t>
       nancheck(rhs.at(ix::rv)(this->ijk), "RHS of rv after sgs_scalar_forces");
     }
   }
-<<<<<<< HEAD
 
   virtual void record_k_m() = 0;
 
-=======
   /**
    * @brief Records diagnostics related to SGS turbulence (TKE, fluxes, etc.).
    */
->>>>>>> master
   void diag() override
   {
     assert(this->rank == 0);
@@ -406,10 +338,6 @@ class slvr_sgs_smg_common : public slvr_common<ct_params_t>
   // per-thread copy of params
   rt_params_t params;
 
-<<<<<<< HEAD
-  // ctor
-  slvr_sgs_smg_common( 
-=======
   /**
  * @brief Constructor of an SGS solver.
  *
@@ -417,8 +345,7 @@ class slvr_sgs_smg_common : public slvr_common<ct_params_t>
  * @param p Runtime parameters.
  * @throws std::runtime_error if both `cdrag` and `fricvelsq` are > 0.
  */
-  slvr_sgs( 
->>>>>>> master
+  slvr_sgs_smg_common( 
     typename parent_t::ctor_args_t args, 
     const rt_params_t &p
   ) : 

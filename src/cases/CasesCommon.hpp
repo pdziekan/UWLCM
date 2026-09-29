@@ -142,12 +142,6 @@ namespace cases
      * @brief Virtual function to set case-specific options.
      */
     virtual void setopts(rt_params_t &params, const int nps[], const user_params_t &user_params) {assert(false);};
-<<<<<<< HEAD
-    virtual void intcond(concurr_any_t &concurr, arr_1D_t &rhod, arr_1D_t &th_e, arr_1D_t &rv_e, arr_1D_t &rl_e, arr_1D_t &p_e, int rng_seed) =0;
-
-    // virtual void set_profs(detail::profiles_t &profs, int nx, int nz, const user_params_t &user_params)
-    virtual void set_profs(detail::profiles_t &profs, const int nps[n_dims], const user_params_t &user_params)
-=======
 
     /**
      * @brief Virtual function to set case-specific initial conditions.
@@ -155,10 +149,10 @@ namespace cases
     virtual void intcond(concurr_any_t &concurr, arr_1D_t &rhod, arr_1D_t &th_e, arr_1D_t &rv_e, arr_1D_t &rl_e, arr_1D_t &p_e, int rng_seed, const int nps[n_dims]) =0;
 
     /**
- * @brief Initialize profiles for SGS and surface fluxes.
- */
-    virtual void set_profs(detail::profiles_t &profs, int nz, const user_params_t &user_params)
->>>>>>> master
+     * @brief Initialize profiles for SGS and surface fluxes.
+     */
+    // virtual void set_profs(detail::profiles_t &profs, int nx, int nz, const user_params_t &user_params)
+    virtual void set_profs(detail::profiles_t &profs, const int nps[n_dims], const user_params_t &user_params)
     {
       static_assert(n_dims == 2 || n_dims == 3, "set_profs: n_dims must be 2 or 3");
       // TODO: get these constants from user_params (or rt_params_t)
