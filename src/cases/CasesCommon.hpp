@@ -210,8 +210,8 @@ namespace cases
         // NOTE: it's not really mixing length, but grid size used to calculate mixing length; mixing length calculation is in slvr_sgs.hpp; 
         //       here we just set the characteristic grid size along each direction to simplify potential future option to override it (as with isotropic sgs_delta)
         real_t dxy = pow(dx * dy, real_t(1./2));
-        profs.mix_len_hori_sq = pow2(real_t(1) / (real_t(1) / pow2(karman_c * max(k, 1) * dz) + real_t(1) / pow2(smg_c * dxy)));
-        profs.mix_len_vert_sq = pow2(real_t(1) / (real_t(1) / pow2(karman_c * max(k, 1) * dz) + real_t(1) / pow2(smg_c * dz)));
+        profs.mix_len_hori_sq = real_t(1) / (real_t(1) / pow2(karman_c * max(k, 1) * dz) + real_t(1) / pow2(smg_c * dxy));
+        profs.mix_len_vert_sq = real_t(1) / (real_t(1) / pow2(karman_c * max(k, 1) * dz) + real_t(1) / pow2(smg_c * dz));
         // real_t(1) / (real_t(1) / pow(this->smg_c * params.di, 2) + (*this->params.mix_len)(this->vert_idx))
         // profs.mix_len_vert_sq = dz; // real_t(1) / pow2(karman_c * max(k, 1) * dz);
         // add dx dy terms; also add sgs_delta, from user params...
