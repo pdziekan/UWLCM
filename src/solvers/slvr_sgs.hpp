@@ -463,7 +463,7 @@ class slvr_sgs_smg_iso : public slvr_sgs_smg_common<ct_params_t>
   void calc_sgs_diag_fields() override
   {
     this->tke(this->ijk).reindex(this->zero) = 
-      params.smg_c * params_smg_c * pow2(this->k_m(this->ijk).reindex(this->zero) // C_s^2 because it is in mix_len_iso_sq
+      this->params.smg_c * this->params.smg_c * pow2(this->k_m(this->ijk).reindex(this->zero) // C_s^2 because it is in mix_len_iso_sq
       / (this->c_m)) / (*this->params.mix_len_iso_sq)(this->vert_idx);
     this->calc_sgs_momenta_fluxes();
   }
@@ -560,7 +560,7 @@ class slvr_sgs_smg_ani : public slvr_sgs_smg_common<ct_params_t>
   {
     // NOTE: calculated only using horizontal turbulence, which is assumed to dominate (as dz is expected to be smaller)
     this->tke(this->ijk).reindex(this->zero) = 
-      params.smg_c * params_smg_c * pow2(this->k_m[0](this->ijk).reindex(this->zero) // C_s^2 because it is in mix_len_iso_sq
+      this->params.smg_c * this->params.smg_c * pow2(this->k_m[0](this->ijk).reindex(this->zero) // C_s^2 because it is in mix_len_iso_sq
       / (this->c_m)) / (*this->params.mix_len_hori_sq)(this->vert_idx);
     this->calc_sgs_momenta_fluxes();
   }
