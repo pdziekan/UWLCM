@@ -415,11 +415,26 @@ class slvr_sgs_smg_iso : public slvr_sgs_smg_common<ct_params_t>
     // calculate dissipation rate
 
     // TODO: c_eps should be an adjustable parameter for different cases
-    real_t c_eps = 0.845;
-    this->diss_rate(this->ijk).reindex(this->zero) = c_eps *
-      pow3(this->k_m(this->ijk).reindex(this->zero) / (this->c_m * (*this->params.mix_len_iso_sq)(this->vert_idx)))
-      * (*this->params.mix_len_iso_sq)(this->vert_idx);
+    // method 1a: was correct when mixe_len_iso_sq didnt contain smg_c, but now it does!
+//    real_t c_eps = 0.845;
+//    this->diss_rate(this->ijk).reindex(this->zero) = c_eps *
+//      pow3(this->k_m(this->ijk).reindex(this->zero) / (this->c_m * (*this->params.mix_len_iso_sq)(this->vert_idx)))
+//      * (*this->params.mix_len_iso_sq)(this->vert_idx);
+//
 
+    // method 1b: assumig smg_c is in mix_len_iso_sq
+//    this->diss_rate(this->ijk).reindex(this->zero) = 
+//      pow3(this->k_m(this->ijk).reindex(this->zero)) / 
+//      pow2((*this->params.mix_len_iso_sq)(this->vert_idx));
+
+    // method 2: dont rely on mixing lengths, but dissipation is the energy transferred to SGS model = K_m * |S|^2 * (1-Ri/Pr)
+    this->diss_rate(this->ijk).reindex(this->zero) = where(
+      this->rcdsn_num(this->ijk).reindex(this->zero) / this->prandtl_num < 1,
+      this->k_m(this->ijk).reindex(this->zero)
+        * this->tdef_sq(this->ijk).reindex(this->zero)
+        * (1 - this->rcdsn_num(this->ijk).reindex(this->zero) / this->prandtl_num),
+      0);
+     
     formulae::stress::multiply_tnsr_cmpct<ct_params_t::n_dims, ct_params_t::opts>(this->tau, 1.0, this->k_m, *this->mem->G, this->ijkm_sep);
 
     this->xchng_sgs_tnsr_offdiag(this->tau, this->tau_srfc, this->ijk, this->ijkm);
@@ -447,8 +462,9 @@ class slvr_sgs_smg_iso : public slvr_sgs_smg_common<ct_params_t>
   
   void calc_sgs_diag_fields() override
   {
-    this->tke(this->ijk).reindex(this->zero) = pow2(this->k_m(this->ijk).reindex(this->zero)
-                                                  / (this->c_m)) / (*this->params.mix_len_iso_sq)(this->vert_idx);
+    this->tke(this->ijk).reindex(this->zero) = 
+      params.smg_c * params_smg_c * pow2(this->k_m(this->ijk).reindex(this->zero) // C_s^2 because it is in mix_len_iso_sq
+      / (this->c_m)) / (*this->params.mix_len_iso_sq)(this->vert_idx);
     this->calc_sgs_momenta_fluxes();
   }
 
@@ -526,10 +542,13 @@ class slvr_sgs_smg_ani : public slvr_sgs_smg_common<ct_params_t>
 
     // TODO: c_eps should be an adjustable parameter for different cases
     // NOTE: diss rate is calculated only using horizontal turbulence, which is assumed to dominate (as dz is expected to be smaller)
-    real_t c_eps = 0.845;
-    this->diss_rate(this->ijk).reindex(this->zero) = c_eps *
-      pow3(this->k_m[0](this->ijk).reindex(this->zero) / (this->c_m * (*this->params.mix_len_hori_sq)(this->vert_idx)))
-      * (*this->params.mix_len_hori_sq)(this->vert_idx);
+    // NOTE2: see discussion in isotropic case about methods for diss_rate
+    this->diss_rate(this->ijk).reindex(this->zero) = where(
+      this->rcdsn_num(this->ijk).reindex(this->zero) / this->prandtl_num < 1,
+      this->k_m[0](this->ijk).reindex(this->zero)
+        * this->tdef_sq(this->ijk).reindex(this->zero)
+        * (1 - this->rcdsn_num(this->ijk).reindex(this->zero) / this->prandtl_num),
+      0);
 
     formulae::stress::multiply_tnsr_cmpct<ct_params_t::n_dims, ct_params_t::opts>(this->tau, 1.0, this->k_m, *this->mem->G, this->ijkm_sep);
 
@@ -540,8 +559,9 @@ class slvr_sgs_smg_ani : public slvr_sgs_smg_common<ct_params_t>
   void calc_sgs_diag_fields() override
   {
     // NOTE: calculated only using horizontal turbulence, which is assumed to dominate (as dz is expected to be smaller)
-    this->tke(this->ijk).reindex(this->zero) = pow2(this->k_m[0](this->ijk).reindex(this->zero)
-                                                  / (this->c_m)) / (*this->params.mix_len_hori_sq)(this->vert_idx);
+    this->tke(this->ijk).reindex(this->zero) = 
+      params.smg_c * params_smg_c * pow2(this->k_m[0](this->ijk).reindex(this->zero) // C_s^2 because it is in mix_len_iso_sq
+      / (this->c_m)) / (*this->params.mix_len_hori_sq)(this->vert_idx);
     this->calc_sgs_momenta_fluxes();
   }
 
