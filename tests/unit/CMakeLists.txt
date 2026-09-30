@@ -18,20 +18,20 @@ set_tests_properties(SetupReferenceData PROPERTIES FIXTURES_SETUP "RefDataFixtur
 # Helper to add an "api_test_<scheme>_diff" style test.
 function(add_api_test_diff name)
   add_test(api_test_${name}_diff bash -c "
-    cd ${CMAKE_CURRENT_SOURCE_DIR}/refdata_${name}/ && find ./* -maxdepth 0 -type d -print0 |
+    cd ${CMAKE_CURRENT_BINARY_DIR}/refdata_${name}/ && find ./* -maxdepth 0 -type d -print0 |
       while IFS= read -rd '' dir; do
         echo \"\\n============== working with $dir ===============\";
         params=\"$(grep $(echo \"$dir\" | sed 's/..//') ../hash_dict_${name}.txt)\"
         echo \"$params\"
         echo   'comparing const.h5'
-        h5diff -v2 --relative=2e-4 --exclude-path \"/misc\" --exclude-path \"/git_revisions\" --exclude-path \"/MPI details\" \"${CMAKE_CURRENT_BINARY_DIR}/output_${name}/$dir/const.h5\" \"${CMAKE_CURRENT_SOURCE_DIR}/refdata_${name}/$dir/const.h5\"                 &&
+        h5diff -v2 --relative=2e-4 --exclude-path \"/misc\" --exclude-path \"/git_revisions\" --exclude-path \"/MPI details\" \"${CMAKE_CURRENT_BINARY_DIR}/output_${name}/$dir/const.h5\" \"${CMAKE_CURRENT_BINARY_DIR}/refdata_${name}/$dir/const.h5\"                 &&
         echo   'comparing temp.xmf'                                                                                                                                                      &&
-        diff \"${CMAKE_CURRENT_BINARY_DIR}/output_${name}/$dir/temp.xmf\"     \"${CMAKE_CURRENT_SOURCE_DIR}/refdata_${name}/$dir/temp.xmf\"                                                         &&
+        diff \"${CMAKE_CURRENT_BINARY_DIR}/output_${name}/$dir/temp.xmf\"     \"${CMAKE_CURRENT_BINARY_DIR}/refdata_${name}/$dir/temp.xmf\"                                                         &&
         echo   'comparing timestep0000000000.h5'                                                                                                                                         &&
-        h5diff  -v2 --relative=1e-6 \"${CMAKE_CURRENT_BINARY_DIR}/output_${name}/$dir/timestep0000000000.h5\"     \"${CMAKE_CURRENT_SOURCE_DIR}/refdata_${name}/$dir/timestep0000000000.h5\" rv     &&
-        h5diff  -v2 --relative=1e-6 \"${CMAKE_CURRENT_BINARY_DIR}/output_${name}/$dir/timestep0000000000.h5\"     \"${CMAKE_CURRENT_SOURCE_DIR}/refdata_${name}/$dir/timestep0000000000.h5\" th     &&
+        h5diff  -v2 --relative=1e-6 \"${CMAKE_CURRENT_BINARY_DIR}/output_${name}/$dir/timestep0000000000.h5\"     \"${CMAKE_CURRENT_BINARY_DIR}/refdata_${name}/$dir/timestep0000000000.h5\" rv     &&
+        h5diff  -v2 --relative=1e-6 \"${CMAKE_CURRENT_BINARY_DIR}/output_${name}/$dir/timestep0000000000.h5\"     \"${CMAKE_CURRENT_BINARY_DIR}/refdata_${name}/$dir/timestep0000000000.h5\" th     &&
         echo   'comparing timestep0000000000.xmf'                                                                                                                                        &&
-        diff \"${CMAKE_CURRENT_BINARY_DIR}/output_${name}/$dir/timestep0000000000.xmf\"     \"${CMAKE_CURRENT_SOURCE_DIR}/refdata_${name}/$dir/timestep0000000000.xmf\"                             || exit 1;
+        diff \"${CMAKE_CURRENT_BINARY_DIR}/output_${name}/$dir/timestep0000000000.xmf\"     \"${CMAKE_CURRENT_BINARY_DIR}/refdata_${name}/$dir/timestep0000000000.xmf\"                             || exit 1;
       done
   ")
 endfunction()
